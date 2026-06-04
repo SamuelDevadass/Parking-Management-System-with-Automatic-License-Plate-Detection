@@ -1,6 +1,6 @@
 import picamera
 from tkinter import *
-from PIL import Image,ImageTk,ImageFilter,ImageDraw,ImageEnhance
+from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
 import ocrspace
 
 camera=picamera.PiCamera()
@@ -9,6 +9,7 @@ for i in range(5):
     print("CAPTURING FRAME ",i)
 root=Tk()
 root.title("CAPTURED IMAGE")
+#local path for PI
 image=Image.open("/home/pi/Desktop/frame4.jpg")
 tk_image=ImageTk.PhotoImage(image)
 label=Label(root,image=tk_image)
