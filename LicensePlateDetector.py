@@ -1,9 +1,12 @@
 import picamera
 from tkinter import *
+
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
 import ocrspace
 
-camera=picamera.PiCamera()
+#Get Camera at 0
+camera=picamera.PiCamera()# 0
+#capture 5 frames
 for i in range(5):
     camera.capture('frame{}.jpg'.format(i))
     print("CAPTURING FRAME ",i)
@@ -70,4 +73,4 @@ drawn_image.save("contour.png")
 #TEXT RECOGNITION
 client=ocrspace.API()
 result=client.ocr_file("/home/pi/Desktop/contour.png")
-print("DETECTED NUMBER: ",result)
+print("DETECTED LICENSE NUMBER: ",result)
