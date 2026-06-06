@@ -1,15 +1,17 @@
-# General Code
 import cv2
 from tkinter import *
-
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
 import ocrspace
 
 # Get Camera
 camera = cv2.VideoCapture(0)
+if not camera:
+    print("CAMERA not found\nExiting ... ")
+    exit()
 
+# Capture Video 5 frames
 for i in range(5):
-    #PI Code
+
     ret, frame = camera.read()
 
     if not ret:
@@ -20,7 +22,9 @@ for i in range(5):
     print("CAPTURING FRAME ",i)
     cv2.waitKey(1000)
     cv2.imwrite(f'frame{i}.jpg',frame)
-    
+
+exit()
+
 root=Tk()
 root.title("CAPTURED IMAGE")
 #local path for PI
