@@ -1,19 +1,30 @@
-import picamera
+# General Code
+import cv2
 from tkinter import *
 
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
 import ocrspace
 
-#Get Camera at 0
-camera=picamera.PiCamera()# 0
-#capture 5 frames
+# Get Camera
+camera = cv2.VideoCapture(0)
+
 for i in range(5):
-    camera.capture('frame{}.jpg'.format(i))
+    #PI Code
+    ret, frame = camera.read()
+
+    if not ret:
+        print("UNABLE TO ACCESS CAMERA")
+        break
+
+    cv2.imshow( f'frame{i}.jpg'.format(i),frame)
     print("CAPTURING FRAME ",i)
+    cv2.waitKey(1000)
+    cv2.imwrite(f'frame{i}.jpg',frame)
+    
 root=Tk()
 root.title("CAPTURED IMAGE")
 #local path for PI
-image=Image.open("/home/pi/Desktop/frame4.jpg")
+image=Image.open("./frame4.jpg")
 tk_image=ImageTk.PhotoImage(image)
 label=Label(root,image=tk_image)
 label.pack()
