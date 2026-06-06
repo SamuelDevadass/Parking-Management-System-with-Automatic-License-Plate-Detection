@@ -2,22 +2,25 @@ import cv2
 from tkinter import *
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
 import ocrspace
+from datetime import datetime
 
 # Get Camera
 camera = cv2.VideoCapture(0)
 if not camera:
     print("CAMERA not found\nExiting ... ")
     exit()
+print("CAMERA available at : ",camera)
+
+# Get Current Time for logging
+now = datetime.now()
+print("Current Time: ", now)
 
 # Capture Video 5 frames
 for i in range(5):
-
     ret, frame = camera.read()
-
     if not ret:
         print("UNABLE TO ACCESS CAMERA")
         break
-
     cv2.imshow( f'frame{i}.jpg'.format(i),frame)
     print("CAPTURING FRAME ",i)
     cv2.waitKey(1000)
