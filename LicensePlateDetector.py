@@ -42,7 +42,7 @@ label=Label(root,image=tk_image)
 label.pack()
 # Add timer for 3 seconds
 root.after(3000,root.destroy)
-root.mainloop()
+root.mainloop() # wont close until user closes window, root.after sets a timer 
 camera.release()
 
 exit()
