@@ -3,6 +3,7 @@ from tkinter import *
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
 import ocrspace
 from datetime import datetime
+import os
 
 # Get Camera
 camera = cv2.VideoCapture(0)
@@ -15,6 +16,10 @@ print("CAMERA available at : ",camera)
 now = datetime.now()
 print("Current Time: ", now)
 
+# New repository for current cycle
+folder_path = now.strftime("%Y-%m-%d_%H-%M-%S")
+os.mkdir(folder_path)
+
 # Capture Video 5 frames
 for i in range(5):
     ret, frame = camera.read()
@@ -24,7 +29,8 @@ for i in range(5):
     cv2.imshow( f'frame{i}.jpg'.format(i),frame)
     print("CAPTURING FRAME ",i)
     cv2.waitKey(1000)
-    cv2.imwrite(f'frame{i}.jpg',frame)
+    current_path = os.path.join(folder_path, f"frame{i}.jpg")
+    cv2.imwrite(current_path, frame)
 
 exit()
 
