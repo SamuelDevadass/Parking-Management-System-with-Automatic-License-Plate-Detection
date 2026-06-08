@@ -1,5 +1,5 @@
 venv/
 # dont track images
-# dont track folders
 frame*.jpg
+# dont track folders
 202*_*_*/
