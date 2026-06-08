@@ -17,7 +17,7 @@ now = datetime.now()
 print("Current Time: ", now)
 
 # New repository for current cycle
-folder_path = now.strftime("%Y-%m-%d_%H-%M-%S")
+folder_path = now.strftime("%Y-%m-%d_%H-%M-%S") # os.mkdir() returns None hence create path as string and then create folder
 os.mkdir(folder_path)
 
 # Capture Video 5 frames
@@ -32,18 +32,20 @@ for i in range(5):
     current_path = os.path.join(folder_path, f"frame{i}.jpg")
     cv2.imwrite(current_path, frame)
 
-exit()
-
+# Display captured image
 root=Tk()
-root.title("CAPTURED IMAGE")
+root.title("LATEST CAPTURED IMAGE")
 #local path for PI
-image=Image.open("./frame4.jpg")
+image=Image.open(os.path.join(folder_path, f"frame{4}.jpg"))
 tk_image=ImageTk.PhotoImage(image)
 label=Label(root,image=tk_image)
 label.pack()
+# Add timer for 3 seconds
+root.after(3000,root.destroy)
 root.mainloop()
-camera.close()
+camera.release()
 
+exit()
 #IMAGE PREPROCESSING
 image=Image.open("/home/pi/Desktop/frame4.jpg")
 
