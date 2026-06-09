@@ -142,3 +142,11 @@ else:
         print("NO LICENSE PLATE DETECTED. PLEASE TRY AGAIN")
 
 """V. CLEAN-UP"""
+if not os.path.exists(folder_path):
+    print("FOLDER DOES NOT EXIST . . .")
+    exit()
+else:
+    for filename in os.listdir(folder_path):
+        filepath = os.path.join(folder_path, filename)
+        if filename != "Captured_Image.jpg":
+            os.remove(filepath)
