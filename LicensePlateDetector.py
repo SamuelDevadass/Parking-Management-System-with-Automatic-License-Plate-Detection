@@ -112,12 +112,14 @@ root.title("CONTOURS")
 tk_image=ImageTk.PhotoImage(drawn_image)
 label=Label(root,image=tk_image)
 label.pack()
+root.after(3000,root.destroy)
 root.mainloop()
-#SAVE THE IMAGE
-drawn_image.save("contour.png")
+camera.release()
+current_path = os.path.join(folder_path, "Contours.jpg")
+drawn_image.save(current_path)
 
-exit()
-#TEXT RECOGNITION
+"""III. OCR PIPELINE"""
+
 client=ocrspace.API()
 result=client.ocr_file("/home/pi/Desktop/contour.png")
 print("DETECTED LICENSE NUMBER: ",result)
