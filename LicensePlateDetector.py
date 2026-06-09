@@ -46,6 +46,8 @@ label.pack()
 root.after(3000,root.destroy)
 root.mainloop() # wont close until user closes window, root.after sets a timer 
 camera.release()
+current_path = os.path.join(folder_path, "Captured_Image.jpg")
+image.save(current_path)
 
 """II. IMAGE PREPROCESSING PIPELINE"""
 """II.A. OPENCV"""
@@ -53,7 +55,7 @@ open_cv_image = np.array(image)
 open_cv_image = open_cv_image[:,:,::-1].copy() # RGB to BGR for opencv standards
 
 gray_cv = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY) # Greyscale
-blurred = cv2.GaussainBlur(gray_cv, (3,3), 0.1) # Gaussian Blur
+blurred = cv2.GaussianBlur(gray_cv, (3,3), 0.1) # Gaussian Blur
 sharpened_cv = cv2.addWeighted(gray_cv, 1.8, blurred, -0.8, 0) # Sharpen
 
 # Noise reduction and thresholding
@@ -67,7 +69,7 @@ cv_contours, _ = cv2.findContours(binary_edges_cv, cv2.RETR_LIST, cv2.CHAIN_APPR
 confidence_score = 1.0 if len(cv_contours) > 0 else 0.0
 if confidence_score > 0.5:
     print(f"Confidence Score: {confidence_score} - Using Fast OpenCV Execution")
-    
+    height, width = binary_edges_cv.shape[:2]
     contour_image_cv = np.ones((height, width, 3), dtype=np.uint8) * 255 # New image with contours
     cv2.drawContours(contour_image_cv, cv_contours, -1, (0, 255, 0), 1) # draws all geometric outlines in green with a width of 1
     drawn_image = Image.fromarray(cv2.cvtColor(contour_image_cv, cv2.COLOR_BGR2RGB)) # convert to Pillow image
@@ -104,7 +106,7 @@ else:
     for contour in contours:
         draw.line(contour, fill='green', width=1)
     
-#DISPLAY NEW IMAGE
+
 root=Tk()
 root.title("CONTOURS")
 tk_image=ImageTk.PhotoImage(drawn_image)
