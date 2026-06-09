@@ -136,4 +136,9 @@ else:
     print("Confidence Score below Threshold, falling back to EasyOCR Deep Learning Networks\nRetrying - - - - -")
     results = easy_reader.readtext(np.array(drawn_image)) # easyocr expects numpy array not image object
     text = " ".join([line[1] for line in results])
-    print(f"DETECTED LICENSE PLATE REGISTRATION NUMBER: {text}")
+    if text:
+        print(f"DETECTED LICENSE PLATE REGISTRATION NUMBER: {text}")
+    else:
+        print("NO LICENSE PLATE DETECTED. PLEASE TRY AGAIN")
+
+"""V. CLEAN-UP"""
