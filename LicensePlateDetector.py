@@ -55,91 +55,127 @@ current_path = os.path.join(folder_path, "Captured_Image.jpg")
 image.save(current_path)
 
 """III. IMAGE PREPROCESSING PIPELINE"""
-"""III.A. OPENCV"""
-open_cv_image = np.array(image)
-open_cv_image = open_cv_image[:,:,::-1].copy() # RGB to BGR for opencv standards
+cropped_ocr_input = None
+binary_output = None  # Standardized variable name for the final binary matrix
+w_pil, h_pil = image.size
 
-gray_cv = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY) # Greyscale
-blurred = cv2.GaussianBlur(gray_cv, (3,3), 0.1) # Gaussian Blur
-sharpened_cv = cv2.addWeighted(gray_cv, 1.8, blurred, -0.8, 0) # Sharpen
+"""III.A. PILLOW FIRST RUN"""
+enhancer = ImageEnhance.Contrast(image)
+enhanced_image = enhancer.enhance(1.3)
+sharpness_enhancer = ImageEnhance.Sharpness(enhanced_image)
+sharpened_image = sharpness_enhancer.enhance(1.8)
+sharpened_image = sharpened_image.filter(ImageFilter.GaussianBlur(radius=0.1))
+gray = sharpened_image.convert('L')
+gray = gray.filter(ImageFilter.GaussianBlur(radius=0.1))
 
-# Noise reduction and thresholding
-final_blur = cv2.GaussianBlur(sharpened_cv, (3, 3), 0.1) # apply blur again
-_, binary_edges_cv = cv2.threshold(final_blur, 65, 255, cv2.THRESH_BINARY) # save as binary black & white image
-current_path = os.path.join(folder_path, "Binary_Image.jpg")
-cv2.imwrite(current_path, binary_edges_cv)
+threshold = 65
+binary_edges_pil = gray.point(lambda p: p > threshold and 255)
+contours = []
 
+for x in range(w_pil):
+    for y in range(h_pil):
+        if binary_edges_pil.getpixel((x, y)) == 255:
+            contours.append((x, y))
 
-# Contour detection
-cv_contours, _ = cv2.findContours(binary_edges_cv, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+contour_image = Image.new("RGB", binary_edges_pil.size, (255, 255, 255))
+for contour_point in contours:
+    contour_image.putpixel(contour_point, (0, 0, 0))
 
-# Confidence Score
-confidence_score = 1.0 if len(cv_contours) > 0 else 0.0
+drawn_image = contour_image.copy()
+
+confidence_score = 1.0 if len(contours) > 100 else 0.0
+
 if confidence_score > 0.5:
-    print(f"Confidence Score: {confidence_score} - Using Fast OpenCV Execution")
-    height, width = binary_edges_cv.shape[:2]
-    contour_image_cv = np.ones((height, width, 3), dtype=np.uint8) * 255 # New image with contours
-    cv2.drawContours(contour_image_cv, cv_contours, -1, (0, 255, 0), 1) # draws all geometric outlines in green with a width of 1
-    drawn_image = Image.fromarray(cv2.cvtColor(contour_image_cv, cv2.COLOR_BGR2RGB)) # convert to Pillow image
-
-else:
-    print(f"Confidence Score: {confidence_score} - below Threshold 0.5, falling back to Pillow Execution\nRetrying - - - - -")
-    """III.B. PILLOW"""
-    enhancer = ImageEnhance.Contrast(image) # Enhance Image
-    enhanced_image = enhancer.enhance(1.3)
-    sharpness_enhancer = ImageEnhance.Sharpness(enhanced_image) # Increase Sharpness
-    sharpened_image = sharpness_enhancer.enhance(1.8)
-    sharpened_image=sharpened_image.filter(ImageFilter.GaussianBlur(radius=0.1))
-    gray=sharpened_image.convert('L') # Convert to ,greyscale
-    gray=gray.filter(ImageFilter.GaussianBlur(radius=0.1)) # Noise reduction
-
-
-    # Contour detection
-    threshold = 65
-    binary_edges = gray.point(lambda p: p > threshold and 255)
-    contours = []
-    width, height = binary_edges.size
-    for x in range(width):
-        for y in range(height):
-            if binary_edges.getpixel((x, y)) == 255:
-                contours.append((x, y))
-
-    contour_image = Image.new("RGB", binary_edges.size, (255, 255, 255))
-    for contour_point in contours:
-        contour_image.putpixel(contour_point, (0,0,0))
-
-    drawn_image = contour_image.copy()
-    #DRAW CONTOURS
+    print(f"Confidence Score: {confidence_score} - Pillow Thresholding Succeeded")
     draw = ImageDraw.Draw(drawn_image)
     for contour in contours:
-        draw.line(contour, fill='green', width=1)
+        draw.point(contour, fill='green')
+        
+    x_coords = [p[0] for p in contours]
+    y_coords = [p[1] for p in contours]
+    padding = 5
+    y1 = max(0, min(y_coords) - padding)
+    y2 = min(h_pil, max(y_coords) + padding)
+    x1 = max(0, min(x_coords) - padding)
+    x2 = min(w_pil, max(x_coords) + padding)
     
+    binary_output = np.array(binary_edges_pil)
+    cropped_ocr_input = binary_output[y1:y2, x1:x2]
 
-root=Tk()
+else:
+    """III.B. OPENCV FALLBACK"""
+    print(f"Confidence Score: {confidence_score} - No solid pixel data. Falling back to OpenCV Execution...")
+    open_cv_image = np.array(image)
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+
+    gray_cv = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray_cv, (3, 3), 0.1)
+    sharpened_cv = cv2.addWeighted(gray_cv, 1.8, blurred, -0.8, 0)
+
+    final_blur = cv2.GaussianBlur(sharpened_cv, (3, 3), 0.1)
+    _, binary_output = cv2.threshold(final_blur, 65, 255, cv2.THRESH_BINARY)
+    current_path = os.path.join(folder_path, "Binary_Image.jpg")
+    cv2.imwrite(current_path, binary_output)
+
+    cv_contours, _ = cv2.findContours(binary_output, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    height, width = binary_output.shape[:2]
+    contour_image_cv = np.ones((height, width, 3), dtype=np.uint8) * 255
+    cv2.drawContours(contour_image_cv, cv_contours, -1, (0, 255, 0), 1)
+    
+    drawn_image = Image.fromarray(cv2.cvtColor(contour_image_cv, cv2.COLOR_BGR2RGB))
+    if cv_contours:
+        plate_contour = None
+        for contour in cv_contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            aspect_ratio = float(w) / h
+            if 2.0 <= aspect_ratio <= 5.5:
+                plate_contour = contour
+                break
+
+        if plate_contour is None:
+            plate_contour = max(cv_contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(plate_contour)
+        padding = 5
+        y1, y2 = max(0, y - padding), min(height, y + h + padding)
+        x1, x2 = max(0, x - padding), min(width, x + w + padding)
+        cropped_ocr_input = binary_output[y1:y2, x1:x2]
+    else:
+        cropped_ocr_input = binary_output
+
+# Global safety catch
+if binary_output is None:
+    binary_output = np.array(binary_edges_pil)
+if cropped_ocr_input is None:
+    cropped_ocr_input = binary_output
+
+cv2.imwrite(os.path.join(folder_path, "Cropped_Plate.jpg"), cropped_ocr_input)
+root = Tk()
 root.title("CONTOURS")
-tk_image=ImageTk.PhotoImage(drawn_image)
-label=Label(root,image=tk_image)
+tk_image = ImageTk.PhotoImage(drawn_image)
+label = Label(root, image=tk_image)
 label.pack()
-root.after(3000,root.destroy)
+root.after(3000, root.destroy)
 root.mainloop()
-camera.release()
 current_path = os.path.join(folder_path, "Contours.jpg")
 drawn_image.save(current_path)
 
 """IV. OCR PIPELINE"""
-"""IV.A. RAPIDOCR"""
-results, _ = rapid_engine(binary_edges_cv)
-if results and results[0][2] > 0.85: # threshold
+text = ""
+try:
+    results, _ = rapid_engine(cropped_ocr_input)
+    if not results:
+        raise ValueError("No text in cropped zone")
     text = " ".join([line[1] for line in results])
-    print(f"DETECTED LICENSE PLATE REGISTRATION NUMBER: {text}")
-else:
-    print("Confidence Score below Threshold, falling back to EasyOCR Deep Learning Networks\nRetrying - - - - -")
-    results = easy_reader.readtext(np.array(drawn_image)) # easyocr expects numpy array not image object
-    text = " ".join([line[1] for line in results])
+    print(f"RAPIDOCR SUCCESS: {text}")
+    
+except Exception:
+    print("RapidOCR high-speed pass failed. Trying Deep Learning EasyOCR on cropped zone...")
+    results = easy_reader.readtext(cropped_ocr_input)
+    text = " ".join([detection[1] for detection in results])
     if text:
-        print(f"DETECTED LICENSE PLATE REGISTRATION NUMBER: {text}")
+        print(f"EASYOCR FALLBACK SUCCESS: {text}")
     else:
-        print("NO LICENSE PLATE DETECTED. PLEASE TRY AGAIN")
+        print("NO LICENSE PLATE TEXT DETECTED IN CROPPED ZONE.")
 
 """V. CLEAN-UP"""
 if not os.path.exists(folder_path):
