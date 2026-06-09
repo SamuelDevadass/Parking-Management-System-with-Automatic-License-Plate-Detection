@@ -5,4 +5,3 @@ frame*.jpg
 202*/
 # Block any specific image inside any 202 folder
 202*/*.jpg
-.vscode/
