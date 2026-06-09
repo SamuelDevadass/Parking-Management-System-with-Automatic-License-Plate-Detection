@@ -1,12 +1,17 @@
 import cv2
 from tkinter import *
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
-import ocrspace
 from datetime import datetime
 import os
 import numpy as np
+from rapidocr_onnxruntime import RapidOCR
+import easyocr
 
-"""I. IMAGE CAPTURE PIPELINE"""
+"""I. GLOBAL INITIALIZATIONS"""
+rapid_engine = RapidOCR()
+easy_reader = easyocr.Reader(['en'], gpu=False)
+
+"""II. IMAGE CAPTURE PIPELINE"""
 # Get Camera
 camera = cv2.VideoCapture(0)
 if not camera:
@@ -49,8 +54,8 @@ camera.release()
 current_path = os.path.join(folder_path, "Captured_Image.jpg")
 image.save(current_path)
 
-"""II. IMAGE PREPROCESSING PIPELINE"""
-"""II.A. OPENCV"""
+"""III. IMAGE PREPROCESSING PIPELINE"""
+"""III.A. OPENCV"""
 open_cv_image = np.array(image)
 open_cv_image = open_cv_image[:,:,::-1].copy() # RGB to BGR for opencv standards
 
@@ -61,6 +66,9 @@ sharpened_cv = cv2.addWeighted(gray_cv, 1.8, blurred, -0.8, 0) # Sharpen
 # Noise reduction and thresholding
 final_blur = cv2.GaussianBlur(sharpened_cv, (3, 3), 0.1) # apply blur again
 _, binary_edges_cv = cv2.threshold(final_blur, 65, 255, cv2.THRESH_BINARY) # save as binary black & white image
+current_path = os.path.join(folder_path, "Binary_Image.jpg")
+cv2.imwrite(current_path, binary_edges_cv)
+
 
 # Contour detection
 cv_contours, _ = cv2.findContours(binary_edges_cv, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -76,7 +84,7 @@ if confidence_score > 0.5:
 
 else:
     print(f"Confidence Score: {confidence_score} - below Threshold 0.5, falling back to Pillow Execution\nRetrying - - - - -")
-    """II.B. PILLOW"""
+    """III.B. PILLOW"""
     enhancer = ImageEnhance.Contrast(image) # Enhance Image
     enhanced_image = enhancer.enhance(1.3)
     sharpness_enhancer = ImageEnhance.Sharpness(enhanced_image) # Increase Sharpness
@@ -118,8 +126,14 @@ camera.release()
 current_path = os.path.join(folder_path, "Contours.jpg")
 drawn_image.save(current_path)
 
-"""III. OCR PIPELINE"""
-
-client=ocrspace.API()
-result=client.ocr_file("/home/pi/Desktop/contour.png")
-print("DETECTED LICENSE NUMBER: ",result)
+"""IV. OCR PIPELINE"""
+"""IV.A. RAPIDOCR"""
+results, _ = rapid_engine(binary_edges_cv)
+if results and results[0][2] > 0.85: # threshold
+    text = " ".join([line[1] for line in results])
+    print(f"DETECTED LICENSE PLATE REGISTRATION NUMBER: {text}")
+else:
+    print("Confidence Score below Threshold, falling back to EasyOCR Deep Learning Networks\nRetrying - - - - -")
+    results = easy_reader.readtext(np.array(drawn_image)) # easyocr expects numpy array not image object
+    text = " ".join([line[1] for line in results])
+    print(f"DETECTED LICENSE PLATE REGISTRATION NUMBER: {text}")
