@@ -6,10 +6,12 @@ import os
 import numpy as np
 from rapidocr_onnxruntime import RapidOCR
 import easyocr
+from ultralytics import YOLO
 
 """I. GLOBAL INITIALIZATIONS"""
 rapid_engine = RapidOCR()
 easy_reader = easyocr.Reader(['en'], gpu=False)
+yolo_model = YOLO("yolo26n.pt")
 
 """II. IMAGE CAPTURE PIPELINE"""
 # Get Camera
@@ -27,23 +29,45 @@ print("Current Time: ", now)
 folder_path = now.strftime("%Y-%m-%d_%H-%M-%S") # os.mkdir() returns None hence create path as string and then create folder
 os.mkdir(folder_path)
 
-# Capture Video 5 frames
-for i in range(5):
+# Capture Live Video frames
+print("Live video stream active. Press 'q' inside the window to exit.")
+
+while True:
     ret, frame = camera.read()
     if not ret:
         print("UNABLE TO ACCESS CAMERA")
         break
-    cv2.imshow( f'frame{i}.jpg'.format(i),frame)
-    print("CAPTURING FRAME ",i)
-    cv2.waitKey(1000)
-    current_path = os.path.join(folder_path, f"frame{i}.jpg")
-    cv2.imwrite(current_path, frame)
+
+    results = yolo_model(frame, stream=True)
+
+    for result in results:
+        boxes = result.boxes
+        for box in boxes:
+            # Get integer coordinates for drawing
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            
+            # Extract confidence and class ID
+            conf = float(box.conf[0])
+            class_id = int(box.cls[0])
+            label = f"{result.names[class_id]} {conf:.2f}"
+
+            # Draw the bounding box and label directly onto the live frame
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    cv2.imshow("YOLO Live Detection Feed", frame)
+
+    # Check if the user pressed the 'q' key to quit
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        current_path = os.path.join(folder_path, "Captured_Image.jpg") 
+        cv2.imwrite(current_path, frame)
+        break
 
 # Display captured image
 root=Tk()
 root.title("LATEST CAPTURED IMAGE")
 #local path for PI
-image = Image.open(os.path.join(folder_path, f"frame{4}.jpg"))
+image = Image.open(os.path.join(folder_path, "Captured_Image.jpg"))
 tk_image = ImageTk.PhotoImage(image)
 label = Label(root,image=tk_image)
 label.pack()
@@ -51,7 +75,7 @@ label.pack()
 root.after(3000,root.destroy)
 root.mainloop() # wont close until user closes window, root.after sets a timer 
 camera.release()
-current_path = os.path.join(folder_path, "Captured_Image.jpg")
+cv2.destroyAllWindows()
 image.save(current_path)
 
 """III. IMAGE PREPROCESSING PIPELINE"""
@@ -160,6 +184,7 @@ current_path = os.path.join(folder_path, "Contours.jpg")
 drawn_image.save(current_path)
 
 """IV. OCR PIPELINE"""
+detected = False
 text = ""
 try:
     results, _ = rapid_engine(cropped_ocr_input)
@@ -167,6 +192,7 @@ try:
         raise ValueError("No text in cropped zone")
     text = " ".join([line[1] for line in results])
     print(f"RAPIDOCR SUCCESS: {text}")
+    detected = True
     
 except Exception:
     print("RapidOCR high-speed pass failed. Trying Deep Learning EasyOCR on cropped zone...")
@@ -174,15 +200,20 @@ except Exception:
     text = " ".join([detection[1] for detection in results])
     if text:
         print(f"EASYOCR FALLBACK SUCCESS: {text}")
+        detected = True
     else:
         print("NO LICENSE PLATE TEXT DETECTED IN CROPPED ZONE.")
+        detected = False
 
 """V. CLEAN-UP"""
 if not os.path.exists(folder_path):
     print("FOLDER DOES NOT EXIST . . .")
     exit()
+elif detected is False:
+    print("NO LICENSE PLATE DETECTED . . .")
+    exit()
 else:
     for filename in os.listdir(folder_path):
         filepath = os.path.join(folder_path, filename)
-        if filename != "Captured_Image.jpg":
+        if filename != "Captured_Image.jpg" or "":
             os.remove(filepath)
