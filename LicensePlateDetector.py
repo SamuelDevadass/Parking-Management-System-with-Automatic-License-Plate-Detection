@@ -31,7 +31,7 @@ os.mkdir(folder_path)
 
 # Capture Live Video frames
 print("Live video stream active. Press 'q' inside the window to exit.")
-
+cropped_car_capture = None
 while True:
     ret, frame = camera.read()
     if not ret:
@@ -55,18 +55,24 @@ while True:
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+            if class_id == 2 and conf > 0.65:
+                car_x1, car_y1, car_x2, car_y2 = map(int,box)
+                cropped_car_capture = frame[car_y1:car_y2, car_x1:car_x2]
+
     cv2.imshow("YOLO Live Detection Feed", frame)
 
     # Check if the user pressed the 'q' key to quit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         current_path = os.path.join(folder_path, "Captured_Image.jpg") 
         cv2.imwrite(current_path, frame)
+        if cropped_car_capture is not None:
+            current_path = os.path.join(folder_path, "Car_Crop_Capture.jpg")
+            cv2.imwrite(current_path, cropped_car_capture)
         break
 
 # Display captured image
 root=Tk()
 root.title("LATEST CAPTURED IMAGE")
-#local path for PI
 image = Image.open(os.path.join(folder_path, "Captured_Image.jpg"))
 tk_image = ImageTk.PhotoImage(image)
 label = Label(root,image=tk_image)
@@ -74,9 +80,22 @@ label.pack()
 # Add timer for 3 seconds
 root.after(3000,root.destroy)
 root.mainloop() # wont close until user closes window, root.after sets a timer 
+# Display Car Cropped Capture
+root=Tk()
+root.title("CAR CROPPED CAPTURED")
+if os.path.exists(os.path.join(folder_path, "Car_Crop_Capture.jpg")):
+    image = Image.open(os.path.join(folder_path, "Car_Crop_Capture.jpg"))
+else:
+    image = Image.open(os.path.join(folder_path, "Captured_Image.jpg"))
+tk_image = ImageTk.PhotoImage(image)
+label = Label(root,image=tk_image)
+label.pack()
+# Add timer for 3 seconds
+root.after(3000,root.destroy)
+root.mainloop() # wont close until user closes window, root.after sets a timer 
+
 camera.release()
 cv2.destroyAllWindows()
-image.save(current_path)
 
 """III. IMAGE PREPROCESSING PIPELINE"""
 cropped_ocr_input = None
@@ -215,5 +234,5 @@ elif detected is False:
 else:
     for filename in os.listdir(folder_path):
         filepath = os.path.join(folder_path, filename)
-        if filename != "Captured_Image.jpg" or "":
+        if filename != "Captured_Image.jpg":
             os.remove(filepath)
