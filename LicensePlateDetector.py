@@ -12,6 +12,19 @@ from ultralytics import YOLO
 rapid_engine = RapidOCR()
 easy_reader = easyocr.Reader(['en'], gpu=False)
 yolo_model = YOLO("yolo26n.pt")
+def cleanup():
+        
+    if not os.path.exists(folder_path):
+        print("FOLDER DOES NOT EXIST . . .")
+        exit()
+    elif detected is False:
+        print("NO LICENSE PLATE DETECTED . . .")
+        exit()
+    else:
+        for filename in os.listdir(folder_path):
+            filepath = os.path.join(folder_path, filename)
+            if filename != "Captured_Image.jpg":
+                os.remove(filepath)
 
 """II. IMAGE CAPTURE PIPELINE"""
 # Get Camera
@@ -83,19 +96,45 @@ root.mainloop() # wont close until user closes window, root.after sets a timer
 # Display Car Cropped Capture
 root=Tk()
 root.title("CAR CROPPED CAPTURED")
+
 if os.path.exists(os.path.join(folder_path, "Car_Crop_Capture.jpg")):
-    image = Image.open(os.path.join(folder_path, "Car_Crop_Capture.jpg"))
-else:
-    image = Image.open(os.path.join(folder_path, "Captured_Image.jpg"))
-tk_image = ImageTk.PhotoImage(image)
-label = Label(root,image=tk_image)
-label.pack()
-# Add timer for 3 seconds
-root.after(3000,root.destroy)
-root.mainloop() # wont close until user closes window, root.after sets a timer 
+    yolo_ocr_image = Image.open(os.path.join(folder_path, "Car_Crop_Capture.jpg"))
+    tk_image = ImageTk.PhotoImage(yolo_ocr_image)
+    label = Label(root,image=tk_image)
+    label.pack()
+    # Add timer for 3 seconds
+    root.after(3000,root.destroy)
+    root.mainloop() # wont close until user closes window, root.after sets a timer 
+    """EARLY OCR PIPELINE"""
+    # PERFORM OCR ON THE CROPPED IMAGE
+    detected = False
+    text = ""
+    try:
+        results, _ = rapid_engine(yolo_ocr_image)
+        if not results:
+            raise ValueError("No text in cropped zone")
+        text = " ".join([line[1] for line in results])
+        print(f"RAPIDOCR SUCCESS: {text}")
+        detected = True
+        
+    except Exception:
+        print("RapidOCR high-speed pass failed. Trying Deep Learning EasyOCR on cropped zone...")
+        results = easy_reader.readtext(yolo_ocr_image)
+        text = " ".join([detection[1] for detection in results])
+        if text:
+            print(f"EASYOCR FALLBACK SUCCESS: {text}")
+            detected = True
+        else:
+            print("NO LICENSE PLATE TEXT DETECTED IN CROPPED ZONE.")
+            detected = False
+    camera.release()
+    cv2.destroyAllWindows()
+    cleanup()
+    exit()
 
 camera.release()
 cv2.destroyAllWindows()
+
 
 """III. IMAGE PREPROCESSING PIPELINE"""
 cropped_ocr_input = None
@@ -224,15 +263,5 @@ except Exception:
         print("NO LICENSE PLATE TEXT DETECTED IN CROPPED ZONE.")
         detected = False
 
-"""V. CLEAN-UP"""
-if not os.path.exists(folder_path):
-    print("FOLDER DOES NOT EXIST . . .")
-    exit()
-elif detected is False:
-    print("NO LICENSE PLATE DETECTED . . .")
-    exit()
-else:
-    for filename in os.listdir(folder_path):
-        filepath = os.path.join(folder_path, filename)
-        if filename != "Captured_Image.jpg":
-            os.remove(filepath)
+    cleanup()
+
