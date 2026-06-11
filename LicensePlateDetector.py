@@ -1,3 +1,4 @@
+from typing import Optional,Any
 import cv2
 from tkinter import *
 from PIL import Image, ImageTk, ImageFilter, ImageDraw, ImageEnhance
@@ -90,13 +91,17 @@ class LicensePlateDetection:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 current_path = os.path.join(self.folder_path, "Captured_Image.jpg") 
                 cv2.imwrite(current_path, frame)
+                name_list = ["Captured_Image.jpg"]
                 self.display_image(image_name = "Captured_Image.jpg", title = "LIVE CAPTURED IMAGE")
                 if cropped_car_capture is not None:
                     current_path = os.path.join(self.folder_path, "Car_Crop_Capture.jpg")
                     cv2.imwrite(current_path, cropped_car_capture)
                     self.display_image(image_name = "Car_Crop_Capture.jpg", title = "CROPPED CAR CAPTURE")
+                    name_list.append("Car_Crop_Capture.jpg")
 
                 break
+
+        return name_list
 
     def display_image(self, image_name:str, title:str):
         """Display captured image"""
@@ -111,17 +116,17 @@ class LicensePlateDetection:
         root.mainloop() # wont close until user closes window, root.after sets a timer 
         # Display Car Cropped Capture
          
-    def perform_ocr(self, image_name:str, image_array):
+    def perform_ocr(self, image_name:str, image_array: Optional[Any] = None):
         """OCR PIPELINE"""
         if os.path.exists(os.path.join(self.folder_path,f"{image_name}")):
             image = Image.open(os.path.join(self.folder_path, f"{image_name}"))
         else:
-            image = image_array
+                image = Image.fromarray(cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB))
         # PERFORM OCR ON THE CROPPED IMAGE
         detected = False
         text = ""
         try:
-            results, _ = self.rapid_engine(image)
+            results, _ = self.rapid_ocr_engine(image)
             if not results:
                 raise ValueError("No text in cropped zone")
             text = " ".join([line[1] for line in results])
@@ -130,7 +135,7 @@ class LicensePlateDetection:
             
         except Exception:
             print("RapidOCR high-speed pass failed. Trying Deep Learning EasyOCR on cropped zone...")
-            results = self.easy_reader.readtext(image)
+            results = self.easy_ocr_reader.readtext(image)
             text = " ".join([detection[1] for detection in results])
             if text:
                 print(f"EASYOCR FALLBACK SUCCESS: {text}")
@@ -138,118 +143,107 @@ class LicensePlateDetection:
             else:
                 print("NO LICENSE PLATE TEXT DETECTED IN CROPPED ZONE.")
                 detected = False
+
+        return text, detected
+    
+    def image_processing_pipeline(self, image_name: str):
+        # A. Try Pillow
+        conf, crop, visual = self.pillow_thresholding_pipeline(image_name)
         
-    def image_processing_pipeline(self, image_name:str):
-        """IMAGE PREPROCESSING PIPELINE"""
-        cropped_ocr_input = None
-        binary_output = None  # Standardized variable name for the final binary matrix
-        confidence_score, cropped_ocr_input = self.pillow_thresholding_pipeline(image_name = image_name)
-
-        if confidence_score > 0.5:
-            print(f"Confidence Score: {confidence_score} - Pillow Thresholding Succeeded")
-            final_result = np.array(cropped_ocr_input)
-        else:
-            print(f"Confidence Score: {confidence_score} - No solid pixel data. Falling back to OpenCV Execution...")
-            final_result = self.opencv_thresholding_pipeline(image_name = image_name)
-
-        cv2.imwrite(os.path.join(self.folder_path, "Cropped_Plate.jpg"), final_result)
-        self.display_image(image_name = "Cropped_Plate.jpg", title = "CONTOURS")
-        return "Cropped_Plate.jpg", final_result
-
-
-
-    def pillow_thresholding_pipeline(self, image_name:str):
-        """PILLOW THRESHOLDING PIPELINE"""
-        image = Image.open(os.path.join(self.folder_path, f"{image_name}"))
-        w_pil, h_pil = image.size
-        enhancer = ImageEnhance.Contrast(image)
-        enhanced_image = enhancer.enhance(1.3)
-        sharpness_enhancer = ImageEnhance.Sharpness(enhanced_image)
-        sharpened_image = sharpness_enhancer.enhance(1.8)
-        sharpened_image = sharpened_image.filter(ImageFilter.GaussianBlur(radius=0.1))
-        gray = sharpened_image.convert('L')
-        gray = gray.filter(ImageFilter.GaussianBlur(radius=0.1))
-
-        threshold = 65
-        binary_edges_pil = gray.point(lambda p: p > threshold and 255)
-        contours = []
-
-        for x in range(w_pil):
-            for y in range(h_pil):
-                if binary_edges_pil.getpixel((x, y)) == 255:
-                    contours.append((x, y))
-
-        contour_image = Image.new("RGB", binary_edges_pil.size, (255, 255, 255))
-        for contour_point in contours:
-            contour_image.putpixel(contour_point, (0, 0, 0))
-
-        drawn_image = contour_image.copy()
-
-        confidence_score = 1.0 if len(contours) > 100 else 0.0
-
-        if confidence_score > 0.5:
-            print(f"Confidence Score: {confidence_score} - Pillow Thresholding Succeeded")
-            draw = ImageDraw.Draw(drawn_image)
-            for contour in contours:
-                draw.point(contour, fill='green')
-                
-            x_coords = [p[0] for p in contours]
-            y_coords = [p[1] for p in contours]
-            padding = 5
-            y1 = max(0, min(y_coords) - padding)
-            y2 = min(h_pil, max(y_coords) + padding)
-            x1 = max(0, min(x_coords) - padding)
-            x2 = min(w_pil, max(x_coords) + padding)
-
-            binary_output = np.array(binary_edges_pil)
-            cropped_ocr_input = binary_output[y1:y2, x1:x2]
+        # B. Fallback if needed
+        if conf <= 0.5:
+            print("Pillow low confidence, falling back to OpenCV...")
+            crop, visual = self.opencv_thresholding_pipeline(image_name)
             
-        return confidence_score, cropped_ocr_input
-
-    def opencv_thresholding_pipeline(self, image_name:str):
-        """OPENCV THRESHOLDING PIPELINE"""
-        image = Image.open(os.path.join(self.folder_path, f"{image_name}"))
-        open_cv_image = np.array(image)
-        open_cv_image = open_cv_image[:, :, ::-1].copy()
-
-        gray_cv = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray_cv, (3, 3), 0.1)
-        sharpened_cv = cv2.addWeighted(gray_cv, 1.8, blurred, -0.8, 0)
-
-        final_blur = cv2.GaussianBlur(sharpened_cv, (3, 3), 0.1)
-        _, binary_output = cv2.threshold(final_blur, 65, 255, cv2.THRESH_BINARY)
-        current_path = os.path.join(self.folder_path, "Binary_Image.jpg")
-        cv2.imwrite(current_path, binary_output)
-
-        cv_contours, _ = cv2.findContours(binary_output, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        height, width = binary_output.shape[:2]
-        contour_image_cv = np.ones((height, width, 3), dtype=np.uint8) * 255
-        cv2.drawContours(contour_image_cv, cv_contours, -1, (0, 255, 0), 1)
+        # C. Standardize Output (Save visual for display, return crop for OCR)
+        visual.save(os.path.join(self.folder_path, "Contours.jpg"))
+        self.display_image(image_name="Contours.jpg", title="CONTOURS")
         
-        drawn_image = Image.fromarray(cv2.cvtColor(contour_image_cv, cv2.COLOR_BGR2RGB))
-        if cv_contours:
-            plate_contour = None
-            for contour in cv_contours:
-                x, y, w, h = cv2.boundingRect(contour)
-                aspect_ratio = float(w) / h
-                if 2.0 <= aspect_ratio <= 5.5:
-                    plate_contour = contour
-                    break
+        return "Contours.jpg", crop
 
-            if plate_contour is None:
-                plate_contour = max(cv_contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(plate_contour)
+    def pillow_thresholding_pipeline(self, image_name: str):
+        # 1. Load and Preprocess
+        image = Image.open(os.path.join(self.folder_path, image_name)).convert("RGB")
+        gray = image.convert('L').filter(ImageFilter.GaussianBlur(0.1))
+        
+        # 2. Thresholding
+        threshold = 65
+        binary_edges = gray.point(lambda p: 255 if p > threshold else 0)
+        
+        # 3. Find Contours (Using built-in filter for cleaner edges)
+        # Instead of painting every white pixel, we find the boundaries
+        edge_map = binary_edges.filter(ImageFilter.FIND_EDGES)
+        
+        drawn_image = image.copy()
+        draw = ImageDraw.Draw(drawn_image)
+        
+        # Get coordinates only for the edge pixels
+        binary_np = np.array(edge_map)
+        coords = np.argwhere(binary_np > 0)
+        
+        confidence_score = 1.0 if len(coords) > 100 else 0.0
+        
+        if confidence_score > 0.5:
+            # Draw only the edges as lines/points
+            for y, x in coords:
+                draw.point((x, y), fill='green')
+            
+            # Crop logic remains the same
+            y1, x1 = coords.min(axis=0)
+            y2, x2 = coords.max(axis=0)
             padding = 5
-            y1, y2 = max(0, y - padding), min(height, y + h + padding)
-            x1, x2 = max(0, x - padding), min(width, x + w + padding)
-            cropped_ocr_input = binary_output[y1:y2, x1:x2]
+            cropped_ocr_input = np.array(binary_edges)[max(0, y1-padding):y2+padding, 
+                                                       max(0, x1-padding):x2+padding]
         else:
-            cropped_ocr_input = binary_output
+            cropped_ocr_input = np.array(binary_edges)
 
-        current_path = os.path.join(self.folder_path, "Contours.jpg")
-        drawn_image.save(current_path)
+        return confidence_score, cropped_ocr_input, drawn_image
 
-        return cropped_ocr_input
+    def opencv_thresholding_pipeline(self, image_name: str):
+        # 1. Process
+        img = cv2.imread(os.path.join(self.folder_path, image_name))
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 65, 255, cv2.THRESH_BINARY)
+        
+        # 2. Draw on original-style visual
+        drawn_image_cv = img.copy()
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(drawn_image_cv, contours, -1, (0, 255, 0), 1)
+        drawn_image = Image.fromarray(cv2.cvtColor(drawn_image_cv, cv2.COLOR_BGR2RGB))
+        
+        # 3. Logic to extract crop
+        plate_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(plate_contour)
+        padding = 5
+        cropped_ocr_input = binary[max(0, y-padding):y+h+padding, 
+                                   max(0, x-padding):x+w+padding]
+        
+        return cropped_ocr_input, drawn_image
+
+class Detector:
+    def __init__(self):
+        self.License_Plate_Detector = LicensePlateDetection()
+
+    def start(self):
+        print("STARTING APPLICATION . . .")
+        self.License_Plate_Detector.startup_check()
+        name_list = self.License_Plate_Detector.video_capture_with_yolo()
+        if len(name_list) > 1:
+            image_name = name_list[1]
+            # Perform EarlyOCR on the YOLO cropped image
+            _ , detected = self.License_Plate_Detector.perform_ocr(image_name=image_name)
+            print("YOLO OCR SUCCESS")
+        else:
+            image_name = name_list[0]
+
+        final_name, final_result = self.License_Plate_Detector.image_processing_pipeline(image_name = image_name)
+        _ , detected = self.License_Plate_Detector.perform_ocr(image_name=final_name, image_array=final_result)
+        #self.License_Plate_Detector.cleanup(detected_status=detected)
+
+if __name__ == "__main__":
+    app = Detector()
+    app.start()
+
 
 
 
