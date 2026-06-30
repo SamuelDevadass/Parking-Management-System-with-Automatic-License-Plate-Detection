@@ -1,0 +1,6 @@
+easyocr==1.7.2
+numpy==2.5.0
+opencv_python==4.13.0.92
+Pillow==12.2.0
+rapidocr_onnxruntime==1.2.3
+ultralytics==8.4.63

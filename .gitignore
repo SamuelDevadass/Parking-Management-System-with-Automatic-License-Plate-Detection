@@ -1,3 +1,4 @@
+.env
 venv/
 # dont track images
 frame*.jpg
@@ -5,3 +6,15 @@ frame*.jpg
 202*/
 # Block any specific image inside any 202 folder
 202*/*.jpg
+
+# Learnings:
+
+# venv startup: i.  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Remote
+#               ii. ./venv/scripts/Activate
+
+# Pipreqs library: To add only those libraries actually imported in the files
+#                  Command: pipreqs . --force
+
+# Final to enforce constant or static rule
+#   Eg: from typing import Final
+#       CONNECTION_STRING: Final = "<>"
