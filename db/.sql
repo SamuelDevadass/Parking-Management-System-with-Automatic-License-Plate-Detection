@@ -7,10 +7,33 @@ CREATE TABLE IF NOT EXISTS public.has_parking_spot
     centre_id integer NOT NULL,
     wing text COLLATE pg_catalog."default" NOT NULL,
     floor text COLLATE pg_catalog."default" NOT NULL,
-    spot_number character varying(7) COLLATE pg_catalog."default" NOT NULL,
+    spot_number text COLLATE pg_catalog."default" NOT NULL,
+    size text COLLATE pg_catalog."default",
     availability boolean,
     CONSTRAINT has_parking_spot_pkey PRIMARY KEY (centre_id, wing, floor, spot_number),
-    CONSTRAINT unique_floor UNIQUE (centre_id, wing, floor),
+    CONSTRAINT fk_floor FOREIGN KEY (centre_id, wing, floor)
+        REFERENCES public.has_wing_floor (centre_id, wing, floor) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.has_parking_spot
+    OWNER to postgres;
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Table: public.has_wing_floor
+
+-- DROP TABLE IF EXISTS public.has_wing_floor;
+
+CREATE TABLE IF NOT EXISTS public.has_wing_floor
+(
+    centre_id integer NOT NULL,
+    wing text COLLATE pg_catalog."default" NOT NULL,
+    floor text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT has_wing_floor_pkey PRIMARY KEY (centre_id, wing, floor),
     CONSTRAINT fk_centre_id FOREIGN KEY (centre_id)
         REFERENCES public.owns_centre (centre_id) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -19,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.has_parking_spot
 
 TABLESPACE pg_default;
 
-ALTER TABLE IF EXISTS public.has_parking_spot
+ALTER TABLE IF EXISTS public.has_wing_floor
     OWNER to postgres;
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -150,16 +173,7 @@ CREATE TABLE IF NOT EXISTS public.parking_log
     spot_number character varying(7) COLLATE pg_catalog."default",
     duration interval,
     amount numeric(10,2),
-    image_folder_path text COLLATE pg_catalog."default",
-    CONSTRAINT parking_log_pkey PRIMARY KEY (entry_time, license_number),
-    CONSTRAINT fk_license_number FOREIGN KEY (license_number)
-        REFERENCES public.owns_vehicle (license_number) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_spot_id FOREIGN KEY (centre_id, wing, floor, spot_number)
-        REFERENCES public.has_parking_spot (centre_id, wing, floor, spot_number) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+    image_folder_path text COLLATE pg_catalog."default"
 )
 
 TABLESPACE pg_default;
@@ -182,8 +196,8 @@ CREATE TABLE IF NOT EXISTS public.watchman_supervises
     wing text COLLATE pg_catalog."default" NOT NULL,
     floor text COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT watchman_supervises_pkey PRIMARY KEY (watchman_id),
-    CONSTRAINT fk_unique_floor FOREIGN KEY (centre_id, wing, floor)
-        REFERENCES public.has_parking_spot (centre_id, wing, floor) MATCH SIMPLE
+    CONSTRAINT fk_floor FOREIGN KEY (centre_id, wing, floor)
+        REFERENCES public.has_wing_floor (centre_id, wing, floor) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
