@@ -27,9 +27,7 @@ class ParkingApp(tk.Tk):
             "wing":tk.StringVar(),
             "floor":None,
             "spot_number":None,
-            "type":None
-        
-        }
+            "size":tk.StringVar(),}
         
         self.container = tk.Frame(self)
         self.update()
@@ -120,9 +118,11 @@ class Empty_Spots_Page(tk.Frame):
 
         tk.Button(self, text="Continue", font=('Arial', 15),
                   command=lambda: controller.show_page("Page1")).grid(row=4, column=0, pady=5)
+        
+        tk.Button(self, text="Select Wing", font=('Arial', 15),
+                  command=lambda: controller.show_page("Select_Wing_Page")).grid(row=5, column=0, pady=5)
 
         self.grid_columnconfigure(0, weight=1)
-        # no more <Visibility> binding
 
     def on_show(self):
         self.refresh_data()
@@ -166,9 +166,21 @@ class Page1(tk.Frame):
         tk.Label(self, text="Automatic License Plate Detection", font=('Arial', 26)).grid(row=0, column=0, columnspan=2,pady=10)
         
         # 2. Buttons
-        tk.Button(self, text="Start Detection", font=('Arial', 15), command=self.start_detection).grid(row=2, column=0, pady=10)
-        tk.Button(self, text="Stop Detection", font=('Arial', 15), command=self.stop_detection).grid(row=2, column=1, pady=10)
-        tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page2")).grid(row=3, column=0, columnspan=2, pady=5)
+        tk.Button(self, text="Start Detection", font=('Arial', 15), command=self.start_detection).grid(row=1, column=0, pady=10)
+        tk.Button(self, text="Stop Detection", font=('Arial', 15), command=self.stop_detection).grid(row=1, column=1, pady=10)
+
+        tk.Label(self, text="License Plate:", font=('Arial', 15)).grid(row=2, column=0, pady=10)
+        tk.Entry(self, textvariable=controller.shared_data["license_plate"], font=('Arial', 10)).grid(row=2, column=1, pady=10)
+
+        tk.Label(self, text="Vehicle Type:", font=('Arial', 15)).grid(row=3, column=0, pady=10)
+        self.size_dropdown = ttk.Combobox(
+            self, textvariable=self.controller.shared_data["size"],
+            values=["Two Wheeler", "Four Wheeler"], font=('Arial', 10), state="readonly"
+        )
+        self.size_dropdown.grid(row=3, column=1, pady=10)
+        self.size_dropdown.bind("<<ComboboxSelected>>", self.on_size_selected)
+
+        tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page2")).grid(row=4, column=0, columnspan=2, pady=5)
         
         # 3. Add these two lines to center the grid columns!
         self.grid_columnconfigure(0, weight=1)
@@ -193,29 +205,84 @@ class Page1(tk.Frame):
         self.stop_event.set()
         print("Stopping detection...")
 
+    def on_size_selected(self, event=None):
+        self.controller.shared_data["floor"] = None
+        self.controller.shared_data["spot_number"] = None
+
 
 class Page2(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
-        tk.Label(self, text="Mark Entry / Exit", font=('Arial', 26)).grid(row=0,column=0,columnspan=2,pady=10)
+        self.controller = controller  
+
+        tk.Label(self, text="Mark Entry / Exit", font=('Arial', 26)).grid(row=0, column=0, columnspan=2, pady=10)
+
         
-        # License Plate Field (Autofilled)
-        tk.Label(self, text="License Plate:", font=('Arial',15),).grid(row=1,column=0,pady=10)
-        tk.Entry(self, textvariable=controller.shared_data["license_plate"], font = ('Arial',10)).grid(row=1,column=1,pady=10)
-        
-        # 5 dummy fields
-        tk.Entry(self, text = "Enter", font=('Arial',15), width=30).grid(row=2,column=0,columnspan=2,pady=2)
-            
+        self.load_spots()
+
+        tk.Label(self, text="Available Spots:", font=('Arial', 15)).grid(row=3, column=0, pady=10)
+        self.spot_var = tk.StringVar()
+        self.spot_dropdown = ttk.Combobox(
+            self, textvariable=self.spot_var, values=[], width=40,
+            font=('Arial', 10), state="readonly"
+        )
+        self.spot_dropdown.grid(row=3, column=1, pady=10)
+        self.spot_dropdown.bind("<<ComboboxSelected>>", self.on_spot_selected)
+
         # Action Buttons
-        tk.Button(self, text="Mark Entry", font=('Arial',15), command=lambda: print("DB Entry Added")).grid(row=7,column=0,pady=5)
-        tk.Button(self, text="Mark Exit", font=('Arial',15), command=lambda: print("DB Exit Updated")).grid(row=7,column=1,pady=5)
-        tk.Button(self, text="Generate Bill", font=('Arial',15), command=lambda: controller.show_page("Page3")).grid(row=8,column=0,columnspan=2,pady=5)
-        
-        # New Return Button
-        tk.Button(self, text="Return", font=('Arial',15), command=lambda: controller.show_page("Empty_Spots_Page")).grid(row=9,column=0,columnspan=2,pady=10)
+        tk.Button(self, text="Mark Entry", font=('Arial', 15), command=lambda: print("DB Entry Added")).grid(row=4, column=0, pady=5)
+        tk.Button(self, text="Mark Exit", font=('Arial', 15), command=lambda: print("DB Exit Updated")).grid(row=4, column=1, pady=5)
+        tk.Button(self, text="Generate Bill", font=('Arial', 15), command=lambda: controller.show_page("Page3")).grid(row=5, column=0, columnspan=2, pady=5)
+        tk.Button(self, text="Return", font=('Arial', 15), command=lambda: controller.show_page("Empty_Spots_Page")).grid(row=6, column=0, columnspan=2, pady=10)
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
+
+        # cache of (floor, spot_number, size) tuples for the current spot_dropdown values
+        self._spot_lookup = {}
+
+    def on_show(self):
+        self.spot_var.set("")
+        self.spot_dropdown["values"] = []
+        self.controller.shared_data["floor"] = None
+        self.controller.shared_data["spot_number"] = None
+        if self.controller.shared_data["size"].get():
+            self.load_spots()
+
+
+    def load_spots(self):
+        size = self.controller.shared_data["size"].get()
+        if not size:
+            return
+        rows = self.get_available_spots(size)
+        display_values = [f"Floor {floor} - Spot {spot} ({sz})" for floor, spot, sz in rows]
+        self._spot_lookup = dict(zip(display_values, rows))
+        self.spot_dropdown["values"] = display_values
+        self.spot_var.set("")
+
+    def on_spot_selected(self, event=None):
+        selected = self.spot_var.get()
+        floor, spot_number, size = self._spot_lookup[selected]
+        self.controller.shared_data["floor"] = floor
+        self.controller.shared_data["spot_number"] = spot_number
+        print(f"DEBUG: Selected spot {floor}/{spot_number} ({size})")
+
+    def get_available_spots(self, size):
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT floor, spot_number, size
+                       FROM has_parking_spot
+                       WHERE centre_id = %s AND wing = %s AND size = %s AND availability = True
+                       ORDER BY floor, spot_number""",
+                    (
+                        self.controller.shared_data["centre_id"],
+                        self.controller.shared_data["wing"].get(),
+                        size,
+                    ),
+                )
+                return cur.fetchall()
+   
 
 class Page3(tk.Frame):
     def __init__(self, parent, controller):
