@@ -14,9 +14,10 @@ class ParkingApp(tk.Tk):
     def __init__(self):
         super().__init__()
         load_dotenv()
+        self.update()
         self.CONNECTION_STRING: Final = f"dbname={os.getenv("DB_NAME")} user={os.getenv("DB_USER")} password={os.getenv("DB_PW")} host={os.getenv("DB_HOST")}"
         self.title("Parking Management System")
-        self.geometry("550x500")
+        self.geometry("700x500")
         
         # Shared data
         self.shared_data = {
@@ -31,6 +32,7 @@ class ParkingApp(tk.Tk):
         }
         
         self.container = tk.Frame(self)
+        self.update()
         self.container.pack(fill="both", expand=True)
         
         self.frames = {}
@@ -43,13 +45,16 @@ class ParkingApp(tk.Tk):
         self.show_page("Select_Wing_Page")
 
     def show_page(self, page_name):
-        self.frames[page_name].tkraise()
+        frame = self.frames[page_name]
+        frame.tkraise()
+        if hasattr(frame, "on_show"):
+            frame.on_show()
 
 class Select_Wing_Page(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        
+        self.update_idletasks()
         tk.Label(self, text="Parking Management System", font=('Arial', 26)).grid(row=0, column=0, columnspan=2, pady=20)
         tk.Label(self, text="Select Your Wing", font=('Arial', 20)).grid(row=1, column=0, columnspan=2, pady=10)
         
@@ -100,25 +105,39 @@ class Empty_Spots_Page(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        
-        tk.Label(self, text=self.controller.shared_data["wing"].get(), font=('Arial', 26)).grid(row=0, column=0, pady=10)
-        tk.Label(self, text="Check Availability", font=('Arial', 20)).grid(row=1, column=0, pady=10)
 
-        # Empty Spots Count
-        two_wheelers, four_wheelers = self.get_free_spots_count()
+        self.wing_label = tk.Label(self, text="", font=('Arial', 26))
+        self.wing_label.grid(row=0, column=0, pady=10)
 
-        if two_wheelers == -1 or four_wheelers == -1:
-            tk.Label(self, text="NO FREE SPOTS AVAILABLE", font=('Arial', 26)).grid(row=1, column=0, pady=10)
-        else:
+        self.availability_label = tk.Label(self, text="", font=('Arial', 20))
+        self.availability_label.grid(row=1, column=0, pady=10)
 
-            tk.Label(self, text=f"Free Spots Two-Wheeler = {two_wheelers}", font=('Arial',15)).grid(row=2, column = 0)
-            tk.Label(self, text=f"Free Spots Four-Wheeler = {four_wheelers}", font=('Arial',15)).grid(row=3, column = 0)
+        self.two_wheeler_label = tk.Label(self, text="", font=('Arial', 15))
+        self.two_wheeler_label.grid(row=2, column=0)
 
-            tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page1")).grid(row=4, column=0, pady=5)
-        
-        # 3. Add these two lines to center the grid columns!
+        self.four_wheeler_label = tk.Label(self, text="", font=('Arial', 15))
+        self.four_wheeler_label.grid(row=3, column=0)
+
+        tk.Button(self, text="Continue", font=('Arial', 15),
+                  command=lambda: controller.show_page("Page1")).grid(row=4, column=0, pady=5)
+
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
+        # no more <Visibility> binding
+
+    def on_show(self):
+        self.refresh_data()
+
+    def refresh_data(self):
+        self.wing_label.config(text=f"{self.controller.shared_data['wing'].get()}")
+        two, four = self.get_free_spots_count()
+        if two == -1 and four == -1:
+            self.availability_label.config(text="NO FREE SPOTS AVAILABLE", fg="red")
+            self.two_wheeler_label.config(text="")
+            self.four_wheeler_label.config(text="")
+        else:
+            self.availability_label.config(text="Check Availability", fg="black")
+            self.two_wheeler_label.config(text=f"Free Spots Two-Wheeler = {two}")
+            self.four_wheeler_label.config(text=f"Free Spots Four-Wheeler = {four}")
 
     def get_free_spots_count(self):
         two_wheeler_free_spots = four_wheeler_free_spots = 0
