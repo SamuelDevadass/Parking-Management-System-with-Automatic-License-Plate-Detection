@@ -6,7 +6,8 @@ frame*.jpg
 202*/
 # Block any specific image inside any 202 folder
 202*/*.jpg
-
+.vscode/
+__pycache__/
 # Learnings:
 
 # venv startup: i.  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Remote

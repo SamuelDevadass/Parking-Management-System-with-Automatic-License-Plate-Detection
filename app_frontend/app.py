@@ -17,17 +17,18 @@ class ParkingApp(tk.Tk):
         self.update()
         self.CONNECTION_STRING: Final = f"dbname={os.getenv("DB_NAME")} user={os.getenv("DB_USER")} password={os.getenv("DB_PW")} host={os.getenv("DB_HOST")}"
         self.title("Parking Management System")
-        self.geometry("700x500")
+        self.geometry("700x600")
         
         # Shared data
         self.shared_data = {
-            "license_plate": tk.StringVar(value="Waiting for detection..."),
+            "license_plate": tk.StringVar(value="..."),
             "status": tk.StringVar(value="Idle"),
             "centre_id": None,
             "wing":tk.StringVar(),
             "floor":None,
             "spot_number":None,
-            "size":tk.StringVar(),}
+            "size":tk.StringVar(),
+            "owner_id":tk.StringVar()}
         
         self.container = tk.Frame(self)
         self.update()
@@ -180,7 +181,30 @@ class Page1(tk.Frame):
         self.size_dropdown.grid(row=3, column=1, pady=10)
         self.size_dropdown.bind("<<ComboboxSelected>>", self.on_size_selected)
 
-        tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page2")).grid(row=4, column=0, columnspan=2, pady=5)
+        model =  tk.StringVar()
+        colour = tk.StringVar()
+        phone_number = tk.StringVar()
+        name = tk.StringVar()
+        tk.Label(self, text="Model:", font=('Arial', 15)).grid(row=4, column=0, pady=10)
+        tk.Entry(self, textvariable=model, font=('Arial', 10)).grid(row=4, column=1, pady=10)
+
+        tk.Label(self, text="Colour:", font=('Arial', 15)).grid(row=5, column=0, pady=10)
+        tk.Entry(self, textvariable=colour, font=('Arial', 10)).grid(row=5, column=1, pady=10)
+
+        tk.Label(self, text="Owner_Id:", font=('Arial', 15)).grid(row=6, column=0, pady=10)
+        tk.Entry(self, textvariable=controller.shared_data["owner_id"], font=('Arial', 10)).grid(row=6, column=1, pady=10)
+
+        tk.Label(self, text="Phone Number:", font=('Arial', 15)).grid(row=7, column=0, pady=10)
+        tk.Entry(self, textvariable=phone_number, font=('Arial', 10)).grid(row=7, column=1, pady=10)
+
+        tk.Label(self, text="Name:", font=('Arial', 15)).grid(row=8, column=0, pady=10)
+        tk.Entry(self, textvariable=name, font=('Arial', 10)).grid(row=8, column=1, pady=10)
+
+        tk.Button(self, text="Save Details", font=('Arial', 15), 
+                  command=lambda: self.update_vehicle_details(model, colour, phone_number, name)).grid(row=9, column=0, columnspan=2, pady=5)
+
+        self.update_vehicle_details(model, colour, phone_number, name)
+        tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page2")).grid(row=10, column=0, columnspan=2, pady=5)
         
         # 3. Add these two lines to center the grid columns!
         self.grid_columnconfigure(0, weight=1)
@@ -203,12 +227,44 @@ class Page1(tk.Frame):
 
     def stop_detection(self):
         self.stop_event.set()
+        self.controller.shared_data["owner_id"] = self.controller.shared_data["license_plate"].get()
         print("Stopping detection...")
 
     def on_size_selected(self, event=None):
         self.controller.shared_data["floor"] = None
         self.controller.shared_data["spot_number"] = None
 
+    def update_vehicle_details(self, tk_model, tk_colour, tk_phone_number, tk_name):
+        model = tk_model.get()
+        colour = tk_colour.get()
+        phone_number = tk_phone_number.get()
+        name = tk_name.get()
+        if self.controller.shared_data["owner_id"] is None:
+            self.controller.shared_data["owner_id"] = self.controller.shared_data["license_plate"]
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""INSERT INTO owner (owner_id, name) 
+                                VALUES (%s,%s)
+                                ON CONFLICT (owner_id)
+                                DO NOTHING""",
+                                (self.controller.shared_data["owner_id"].get(),name))
+                
+                cur.execute("""INSERT INTO owner_phone (owner_id, phone) 
+                                VALUES (%s,%s)
+                                ON CONFLICT (owner_id,phone)
+                                DO NOTHING""",
+                                (self.controller.shared_data["owner_id"].get(),phone_number))
+                
+                cur.execute("""INSERT INTO 
+                                owns_vehicle (owner_id, license_number,model,colour,type)
+                                VALUES (%s,%s,%s,%s,%s) 
+                                ON CONFLICT (license_number)
+                                DO NOTHING""",
+                                (self.controller.shared_data["owner_id"].get(),
+                                 self.controller.shared_data["license_plate"].get(),
+                                 model, colour, self.controller.shared_data["size"].get()))
+                
+                conn.commit()
 
 class Page2(tk.Frame):
     def __init__(self, parent, controller):
