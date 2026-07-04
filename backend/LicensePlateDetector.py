@@ -54,11 +54,15 @@ class LicensePlateDetection:
         self.folder_path = now.strftime("%Y-%m-%d_%H-%M-%S") # os.mkdir() returns None hence create path as string and then create folder
         os.mkdir(self.folder_path)
 
-    def video_capture_with_yolo(self):
+    def video_capture_with_yolo(self, stop_event = None):
         """CAPTURE LIVE FEED"""
         print("Live video stream active. Press 'q' inside the window to exit.")
         cropped_car_capture = None
         while True:
+            if stop_event is not None and stop_event.is_set():
+                print("Stop requested from GUI.")
+                break
+
             ret, frame = self.camera.read()
             if not ret:
                 print("UNABLE TO ACCESS CAMERA")
@@ -82,25 +86,26 @@ class LicensePlateDetection:
                     cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
                     if class_id == 2 and conf > 0.65:
-                        car_x1, car_y1, car_x2, car_y2 = map(int,box)
+                        car_x1, car_y1, car_x2, car_y2 = x1, y1, x2, y2
                         cropped_car_capture = frame[car_y1:car_y2, car_x1:car_x2]
 
             cv2.imshow("YOLO Live Detection Feed", frame)
 
             # Check if the user pressed the 'q' key to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                current_path = os.path.join(self.folder_path, "Captured_Image.jpg") 
-                cv2.imwrite(current_path, frame)
-                name_list = ["Captured_Image.jpg"]
-                self.display_image(image_name = "Captured_Image.jpg", title = "LIVE CAPTURED IMAGE")
-                if cropped_car_capture is not None:
-                    current_path = os.path.join(self.folder_path, "Car_Crop_Capture.jpg")
-                    cv2.imwrite(current_path, cropped_car_capture)
-                    self.display_image(image_name = "Car_Crop_Capture.jpg", title = "CROPPED CAR CAPTURE")
-                    name_list.append("Car_Crop_Capture.jpg")
-
                 break
-
+        
+        current_path = os.path.join(self.folder_path, "Captured_Image.jpg") 
+        cv2.imwrite(current_path, frame)
+        name_list = ["Captured_Image.jpg"]
+        self.display_image(image_name = "Captured_Image.jpg", title = "LIVE CAPTURED IMAGE")
+        if cropped_car_capture is not None:
+            current_path = os.path.join(self.folder_path, "Car_Crop_Capture.jpg")
+            cv2.imwrite(current_path, cropped_car_capture)
+            self.display_image(image_name = "Car_Crop_Capture.jpg", title = "CROPPED CAR CAPTURE")
+            name_list.append("Car_Crop_Capture.jpg")
+        
+        cv2.destroyAllWindows()
         return name_list
 
     def display_image(self, image_name:str, title:str):

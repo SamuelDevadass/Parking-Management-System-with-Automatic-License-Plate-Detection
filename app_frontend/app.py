@@ -7,7 +7,7 @@ import os
 from typing import Final
 import psycopg
 import datetime
-
+from backend.LicensePlateDetector import LicensePlateDetection
 # Assuming your class is in a file named detector_module.py
 # from detector_module import LicensePlateDetection 
 
@@ -213,6 +213,12 @@ class Page1(tk.Frame):
         # 3. Add these two lines to center the grid columns!
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
+
+        self.detector = None          # lazy-init, YOLO/OCR load is slow
+        self.detection_thread = None
+        self.stop_event = threading.Event()
+        self.result_queue = queue.Queue()
+
         self.detection_thread = None
         self.stop_event = threading.Event()
     
@@ -256,18 +262,48 @@ class Page1(tk.Frame):
                 if phone_result:
                     self.name.set(name_result[0])
 
-
     def start_detection(self):
         self.stop_event.clear()
-        self.detection_thread = threading.Thread(target=self.run_yolo)
+        self.detection_thread = threading.Thread(target=self.run_yolo, daemon=True)
         self.detection_thread.start()
+        self.after(100, self.poll_result_queue)   # start checking for results
 
     def run_yolo(self):
-        # Initialize your class here
-        # detector = LicensePlateDetection()
-        # Use a loop that checks self.stop_event.is_set()
-        print("Detection loop running...")
-        # Update shared_data using: self.controller.shared_data["license_plate"].set("ABC-1234")
+        """Runs on background thread — no Tkinter calls in here."""
+        try:
+            if self.detector is None:
+                self.detector = LicensePlateDetection()
+            self.detector.startup_check()
+            name_list = self.detector.video_capture_with_yolo(stop_event=self.stop_event)
+
+            if len(name_list) > 1:
+                image_name = name_list[1]
+                _, detected = self.detector.perform_ocr(image_name=image_name)
+            else:
+                image_name = name_list[0]
+
+            final_name, final_result = self.detector.image_processing_pipeline(image_name=image_name)
+            text, detected = self.detector.perform_ocr(image_name=final_name, image_array=final_result)
+
+            self.result_queue.put(("done", text, detected))
+        except Exception as e:
+            self.result_queue.put(("error", str(e), False))
+
+    def poll_result_queue(self):
+        """Runs on main thread — safe to touch shared_data/widgets here."""
+        try:
+            status, text, detected = self.result_queue.get_nowait()
+            if status == "done" and detected:
+                self.controller.shared_data["license_plate"].set(text.strip())
+                print(f"DEBUG: Detected plate -> {text}")
+            elif status == "error":
+                print(f"Detection error: {text}")
+            else:
+                print("No plate detected")
+        except queue.Empty:
+            if self.detection_thread and self.detection_thread.is_alive():
+                self.after(100, self.poll_result_queue)  # keep polling
+            return
 
     def stop_detection(self):
         self.stop_event.set()
