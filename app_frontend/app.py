@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 from typing import Final
 import psycopg
+import datetime
 
 # Assuming your class is in a file named detector_module.py
 # from detector_module import LicensePlateDetection 
@@ -181,38 +182,81 @@ class Page1(tk.Frame):
         self.size_dropdown.grid(row=3, column=1, pady=10)
         self.size_dropdown.bind("<<ComboboxSelected>>", self.on_size_selected)
 
-        model =  tk.StringVar()
-        colour = tk.StringVar()
-        phone_number = tk.StringVar()
-        name = tk.StringVar()
+        self.model =  tk.StringVar(value="")
+        self.colour = tk.StringVar(value="")
+        self.phone_number = tk.StringVar(value="")
+        self.name = tk.StringVar(value="")
+        self.clear_fields()
         tk.Label(self, text="Model:", font=('Arial', 15)).grid(row=4, column=0, pady=10)
-        tk.Entry(self, textvariable=model, font=('Arial', 10)).grid(row=4, column=1, pady=10)
+        tk.Entry(self, textvariable=self.model, font=('Arial', 10)).grid(row=4, column=1, pady=10)
 
         tk.Label(self, text="Colour:", font=('Arial', 15)).grid(row=5, column=0, pady=10)
-        tk.Entry(self, textvariable=colour, font=('Arial', 10)).grid(row=5, column=1, pady=10)
+        tk.Entry(self, textvariable=self.colour, font=('Arial', 10)).grid(row=5, column=1, pady=10)
 
         tk.Label(self, text="Owner_Id:", font=('Arial', 15)).grid(row=6, column=0, pady=10)
         tk.Entry(self, textvariable=controller.shared_data["owner_id"], font=('Arial', 10)).grid(row=6, column=1, pady=10)
 
         tk.Label(self, text="Phone Number:", font=('Arial', 15)).grid(row=7, column=0, pady=10)
-        tk.Entry(self, textvariable=phone_number, font=('Arial', 10)).grid(row=7, column=1, pady=10)
+        tk.Entry(self, textvariable=self.phone_number, font=('Arial', 10)).grid(row=7, column=1, pady=10)
 
         tk.Label(self, text="Name:", font=('Arial', 15)).grid(row=8, column=0, pady=10)
-        tk.Entry(self, textvariable=name, font=('Arial', 10)).grid(row=8, column=1, pady=10)
+        tk.Entry(self, textvariable=self.name, font=('Arial', 10)).grid(row=8, column=1, pady=10)
 
+        tk.Button(self, text="Fetch Details", font=('Arial', 15), 
+                  command= self.fetch_details).grid(row=9, column=0,  pady=5)
+        
         tk.Button(self, text="Save Details", font=('Arial', 15), 
-                  command=lambda: self.update_vehicle_details(model, colour, phone_number, name)).grid(row=9, column=0, columnspan=2, pady=5)
+                  command=lambda: self.update_vehicle_details(self.model, self.colour, self.phone_number, self.name)).grid(row=9, column=1, pady=5)
 
-        self.update_vehicle_details(model, colour, phone_number, name)
         tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page2")).grid(row=10, column=0, columnspan=2, pady=5)
         
         # 3. Add these two lines to center the grid columns!
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
-        
         self.detection_thread = None
         self.stop_event = threading.Event()
     
+    def on_show(self):
+        self.clear_fields()
+    
+    def clear_fields(self):
+        self.model.set("")
+        self.colour.set("")
+        self.phone_number.set("")
+        self.name.set("")
+        self.controller.shared_data["license_plate"].set("")
+        self.controller.shared_data["owner_id"].set("")
+        self.controller.shared_data["size"].set("")
+    
+    def fetch_details(self):
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""SELECT owner_id,model,colour,type
+                                FROM owns_vehicle WHERE license_number = %s""",
+                                (self.controller.shared_data["license_plate"].get(),),)
+                result = cur.fetchone()
+                if result:
+                    self.controller.shared_data["owner_id"].set(result[0])
+                    self.model.set(result[1])
+                    self.colour.set(result[2])
+                    self.controller.shared_data["size"].set(result[3])
+                    
+                cur.execute("""SELECT phone FROM owner_phone
+                                WHERE owner_id = %s""",
+                                (self.controller.shared_data["owner_id"].get(),),)
+                
+                phone_result = cur.fetchone()
+                if phone_result:
+                    self.phone_number.set(phone_result[0])
+
+                cur.execute("SELECT name FROM owner WHERE owner_id = %s",
+                            (self.controller.shared_data["owner_id"].get(),),)
+                
+                name_result = cur.fetchone()
+                if phone_result:
+                    self.name.set(name_result[0])
+
+
     def start_detection(self):
         self.stop_event.clear()
         self.detection_thread = threading.Thread(target=self.run_yolo)
@@ -227,7 +271,6 @@ class Page1(tk.Frame):
 
     def stop_detection(self):
         self.stop_event.set()
-        self.controller.shared_data["owner_id"] = self.controller.shared_data["license_plate"].get()
         print("Stopping detection...")
 
     def on_size_selected(self, event=None):
@@ -239,8 +282,8 @@ class Page1(tk.Frame):
         colour = tk_colour.get()
         phone_number = tk_phone_number.get()
         name = tk_name.get()
-        if self.controller.shared_data["owner_id"] is None:
-            self.controller.shared_data["owner_id"] = self.controller.shared_data["license_plate"]
+        if self.controller.shared_data["owner_id"].get() == "":
+            self.controller.shared_data["owner_id"].set(self.controller.shared_data["license_plate"].get()) 
         with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
             with conn.cursor() as cur:
                 cur.execute("""INSERT INTO owner (owner_id, name) 
@@ -286,8 +329,8 @@ class Page2(tk.Frame):
         self.spot_dropdown.bind("<<ComboboxSelected>>", self.on_spot_selected)
 
         # Action Buttons
-        tk.Button(self, text="Mark Entry", font=('Arial', 15), command=lambda: print("DB Entry Added")).grid(row=4, column=0, pady=5)
-        tk.Button(self, text="Mark Exit", font=('Arial', 15), command=lambda: print("DB Exit Updated")).grid(row=4, column=1, pady=5)
+        tk.Button(self, text="Mark Entry", font=('Arial', 15), command=self.mark_entry).grid(row=4, column=0, pady=5)
+        tk.Button(self, text="Mark Exit", font=('Arial', 15), command=self.calculate_duration).grid(row=4, column=1, pady=5)
         tk.Button(self, text="Generate Bill", font=('Arial', 15), command=lambda: controller.show_page("Page3")).grid(row=5, column=0, columnspan=2, pady=5)
         tk.Button(self, text="Return", font=('Arial', 15), command=lambda: controller.show_page("Empty_Spots_Page")).grid(row=6, column=0, columnspan=2, pady=10)
 
@@ -338,8 +381,68 @@ class Page2(tk.Frame):
                     ),
                 )
                 return cur.fetchall()
-   
+            
+    def mark_entry(self):
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""INSERT INTO 
+                                parking_log (entry_time, license_number, centre_id, wing, floor, spot_number)
+                                VALUES (%s,%s,%s,%s,%s,%s)""",
+                                (datetime.datetime.now(),
+                                self.controller.shared_data["license_plate"].get(),
+                                self.controller.shared_data["centre_id"],
+                                self.controller.shared_data["wing"].get(),
+                                self.controller.shared_data["floor"],
+                                self.controller.shared_data["spot_number"]))
 
+                cur.execute("""UPDATE has_parking_spot
+                                SET availability = False
+                                WHERE centre_id = %s AND wing = %s AND floor = %s AND spot_number = %s""",
+                                (self.controller.shared_data["centre_id"],
+                                self.controller.shared_data["wing"].get(),
+                                self.controller.shared_data["floor"],
+                                self.controller.shared_data["spot_number"]))
+            conn.commit()
+        print("DB Entry Added")
+
+    def calculate_duration(self):
+        exit_time = datetime.datetime.now()
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""SELECT entry_time, centre_id, wing, floor, spot_number
+                                FROM parking_log 
+                                WHERE license_number = %s
+                                AND exit_time IS NULL 
+                                ORDER BY entry_time DESC LIMIT 1""",
+                            (self.controller.shared_data["license_plate"].get(),))
+                result = cur.fetchone()
+                if result:
+                    entry_time, centre_id, wing, floor, spot_number = result
+                    if entry_time.tzinfo is None:
+                        entry_time = entry_time.replace(tzinfo=None)
+                    duration = exit_time - entry_time
+                    self.calculate_bill_amount(duration, entry_time, exit_time, centre_id, wing, floor, spot_number)
+                else:
+                    print("No active parking session found for this plate")
+                    return -1
+
+    def calculate_bill_amount(self, duration, entry_time, exit_time, centre_id, wing, floor, spot_number):
+        self.mark_exit(duration, 100, entry_time, exit_time, centre_id, wing, floor, spot_number)
+
+    def mark_exit(self, duration, amount, entry_time, exit_time, centre_id, wing, floor, spot_number):
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""UPDATE parking_log 
+                                SET exit_time = %s, duration = %s, amount = %s
+                                WHERE entry_time = %s AND exit_time IS NULL""",
+                                (exit_time, duration, amount, entry_time))
+
+                cur.execute("""UPDATE has_parking_spot
+                                SET availability = True
+                                WHERE centre_id = %s AND wing = %s AND floor = %s AND spot_number = %s""",
+                                (centre_id, wing, floor, spot_number))
+            conn.commit()
+        print("DB Exit Updated")
 class Page3(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
