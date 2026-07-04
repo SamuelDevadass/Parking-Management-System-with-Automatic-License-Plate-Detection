@@ -446,10 +446,73 @@ class Page2(tk.Frame):
 class Page3(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
-        tk.Label(self, text="Step 3: Billing", font=('Arial',20)).pack(pady=20)
-        # Add SQL result display here
-        tk.Button(self, text="Print Bill", font=('Arial',20), command=lambda: print("Printing...")).pack()
-        tk.Button(self, text="Return Home", font=('Arial',20), command=lambda: controller.show_page("Empty_Spots_Page")).pack(pady=10)
+        self.controller = controller
+
+        tk.Label(self, text="Billing", font=('Arial', 26)).grid(row=0, column=0, columnspan=2, pady=20)
+
+        self.name_var = tk.StringVar()
+        self.entry_time_var = tk.StringVar()
+        self.exit_time_var = tk.StringVar()
+        self.duration_var = tk.StringVar()
+        self.amount_var = tk.StringVar()
+
+        tk.Label(self, text="License Number:", font=('Arial', 15)).grid(row=1, column=0, pady=10, sticky="e")
+        tk.Label(self, textvariable=controller.shared_data["license_plate"], font=('Arial', 15, 'bold')).grid(row=1, column=1, pady=10, sticky="w")
+
+        tk.Label(self, text="Owner Name:", font=('Arial', 15)).grid(row=2, column=0, pady=10, sticky="e")
+        tk.Label(self, textvariable=self.name_var, font=('Arial', 15, 'bold')).grid(row=2, column=1, pady=10, sticky="w")
+
+        tk.Label(self, text="Entry Time:", font=('Arial', 15)).grid(row=3, column=0, pady=10, sticky="e")
+        tk.Label(self, textvariable=self.entry_time_var, font=('Arial', 15, 'bold')).grid(row=3, column=1, pady=10, sticky="w")
+
+        tk.Label(self, text="Exit Time:", font=('Arial', 15)).grid(row=4, column=0, pady=10, sticky="e")
+        tk.Label(self, textvariable=self.exit_time_var, font=('Arial', 15, 'bold')).grid(row=4, column=1, pady=10, sticky="w")
+
+        tk.Label(self, text="Duration:", font=('Arial', 15)).grid(row=5, column=0, pady=10, sticky="e")
+        tk.Label(self, textvariable=self.duration_var, font=('Arial', 15, 'bold')).grid(row=5, column=1, pady=10, sticky="w")
+
+        tk.Label(self, text="Amount:", font=('Arial', 15)).grid(row=6, column=0, pady=10, sticky="e")
+        tk.Label(self, textvariable=self.amount_var, font=('Arial', 15, 'bold')).grid(row=6, column=1, pady=10, sticky="w")
+
+        tk.Button(self, text="Print Bill", font=('Arial', 20), command=lambda: print("Printing...")).grid(row=7, column=0, columnspan=2, pady=10)
+        tk.Button(self, text="Return Home", font=('Arial', 20), command=lambda: controller.show_page("Empty_Spots_Page")).grid(row=8, column=0, columnspan=2, pady=10)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+    def on_show(self):
+        self.fetch_bill()
+
+    def fetch_bill(self):
+        plate = self.controller.shared_data["license_plate"].get()
+        with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""SELECT entry_time, exit_time, duration, amount
+                               FROM parking_log
+                               WHERE license_number = %s AND exit_time IS NOT NULL
+                               ORDER BY exit_time DESC LIMIT 1""",
+                            (plate,))
+                result = cur.fetchone()
+                if not result:
+                    self.entry_time_var.set("--")
+                    self.exit_time_var.set("--")
+                    self.duration_var.set("--")
+                    self.amount_var.set("No completed session found")
+                    self.name_var.set("--")
+                    return
+
+                entry_time, exit_time, duration, amount = result
+                self.entry_time_var.set(entry_time.strftime("%Y-%m-%d %H:%M:%S"))
+                self.exit_time_var.set(exit_time.strftime("%Y-%m-%d %H:%M:%S"))
+                self.duration_var.set(str(duration))
+                self.amount_var.set(f"₹{amount}")
+
+                cur.execute("""SELECT o.name FROM owner o
+                               JOIN owns_vehicle v ON v.owner_id = o.owner_id
+                               WHERE v.license_number = %s""",
+                            (plate,))
+                name_result = cur.fetchone()
+                self.name_var.set(name_result[0] if name_result else "--")
 
 if __name__ == "__main__":
     app = ParkingApp()
