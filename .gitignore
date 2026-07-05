@@ -8,14 +8,4 @@ frame*.jpg
 202*/*.jpg
 .vscode/
 __pycache__/
-# Learnings:
-
-# venv startup: i.  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Remote
-#               ii. ./venv/scripts/Activate
-
-# Pipreqs library: To add only those libraries actually imported in the files
-#                  Command: pipreqs . --force
-
-# Final to enforce constant or static rule
-#   Eg: from typing import Final
-#       CONNECTION_STRING: Final = "<>"
+backend/yolo26n.pt
