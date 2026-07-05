@@ -7,7 +7,7 @@ import os
 from typing import Final
 import psycopg
 import datetime
-from backend.LicensePlateDetector import LicensePlateDetection
+from backend.LicensePlateDetector import Detector
 # Assuming your class is in a file named detector_module.py
 # from detector_module import LicensePlateDetection 
 
@@ -36,7 +36,7 @@ class ParkingApp(tk.Tk):
         self.container.pack(fill="both", expand=True)
         
         self.frames = {}
-        for F in (Select_Wing_Page,Empty_Spots_Page, Page1, Page2, Page3):
+        for F in (Select_Wing_Page,Empty_Spots_Page, Detection_Page,Page1, Page2, Page3):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
@@ -119,7 +119,7 @@ class Empty_Spots_Page(tk.Frame):
         self.four_wheeler_label.grid(row=3, column=0)
 
         tk.Button(self, text="Continue", font=('Arial', 15),
-                  command=lambda: controller.show_page("Page1")).grid(row=4, column=0, pady=5)
+                  command=lambda: controller.show_page("Detection_Page")).grid(row=4, column=0, pady=5)
         
         tk.Button(self, text="Select Wing", font=('Arial', 15),
                   command=lambda: controller.show_page("Select_Wing_Page")).grid(row=5, column=0, pady=5)
@@ -158,12 +158,11 @@ class Empty_Spots_Page(tk.Frame):
                 else:
                     return -1,-1
 
-
-class Page1(tk.Frame):
+class Detection_Page(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
-        
+
         # 1. Header with columnspan so it stays centered at the top
         tk.Label(self, text="Automatic License Plate Detection", font=('Arial', 26)).grid(row=0, column=0, columnspan=2,pady=10)
         
@@ -171,6 +170,72 @@ class Page1(tk.Frame):
         tk.Button(self, text="Start Detection", font=('Arial', 15), command=self.start_detection).grid(row=1, column=0, pady=10)
         tk.Button(self, text="Stop Detection", font=('Arial', 15), command=self.stop_detection).grid(row=1, column=1, pady=10)
 
+        tk.Label(self, text="License Plate:", font=('Arial', 15)).grid(row=2, column=0, pady=10)
+        tk.Entry(self, textvariable=controller.shared_data["license_plate"], font=('Arial', 10)).grid(row=2, column=1, pady=10)
+
+        tk.Button(self, text="Continue", font=('Arial', 15), command=lambda: controller.show_page("Page1")).grid(row=3, column=0, columnspan=2, pady=5)
+        
+        # 3. Add these two lines to center the grid columns!
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        self.detector = None          # lazy-init, YOLO/OCR load is slow
+        self.detection_thread = None
+        self.stop_event = threading.Event()
+        self.result_queue = queue.Queue()
+
+        self.detection_thread = None
+        self.stop_event = threading.Event()
+
+    def on_show(self):
+        self.clear_fields()
+    
+    def clear_fields(self):
+        self.controller.shared_data["license_plate"].set("")
+
+    def start_detection(self):
+        self.stop_event.clear()
+        self.detection_thread = threading.Thread(target=self.run_yolo, daemon=True)
+        self.detection_thread.start()
+        self.after(100, self.poll_result_queue)   # start checking for results
+
+    def run_yolo(self):
+        """Runs on background thread — no Tkinter calls in here."""
+        try:
+            if self.detector is None:
+                self.detector = Detector()
+            text = self.detector.start(stop_event = self.stop_event)
+            detected = bool(text and text.strip())
+            self.result_queue.put(("done", text, detected))
+        except Exception as e:
+            self.result_queue.put(("error", str(e), False))
+
+    def poll_result_queue(self):
+        try:
+            status, text, detected = self.result_queue.get_nowait()
+            if status == "done":
+                self.controller.shared_data["license_plate"].set(text.strip() if text else "")
+                print(f"DEBUG: Detected plate -> {text}" if detected else "No plate detected")
+            elif status == "error":
+                print(f"Detection error: {text}")
+        except queue.Empty:
+            if self.detection_thread and self.detection_thread.is_alive():
+                self.after(100, self.poll_result_queue)
+            return
+
+    def stop_detection(self):
+        self.stop_event.set()
+        print("Stopping detection...")
+
+
+class Page1(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        
+        # 1. Header with columnspan so it stays centered at the top
+        tk.Label(self, text="User Details", font=('Arial', 26)).grid(row=0, column=0, columnspan=2,pady=10)
+        
         tk.Label(self, text="License Plate:", font=('Arial', 15)).grid(row=2, column=0, pady=10)
         tk.Entry(self, textvariable=controller.shared_data["license_plate"], font=('Arial', 10)).grid(row=2, column=1, pady=10)
 
@@ -214,13 +279,6 @@ class Page1(tk.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        self.detector = None          # lazy-init, YOLO/OCR load is slow
-        self.detection_thread = None
-        self.stop_event = threading.Event()
-        self.result_queue = queue.Queue()
-
-        self.detection_thread = None
-        self.stop_event = threading.Event()
     
     def on_show(self):
         self.clear_fields()
@@ -230,7 +288,7 @@ class Page1(tk.Frame):
         self.colour.set("")
         self.phone_number.set("")
         self.name.set("")
-        self.controller.shared_data["license_plate"].set("")
+        #self.controller.shared_data["license_plate"].set("")
         self.controller.shared_data["owner_id"].set("")
         self.controller.shared_data["size"].set("")
     
@@ -262,52 +320,7 @@ class Page1(tk.Frame):
                 if phone_result:
                     self.name.set(name_result[0])
 
-    def start_detection(self):
-        self.stop_event.clear()
-        self.detection_thread = threading.Thread(target=self.run_yolo, daemon=True)
-        self.detection_thread.start()
-        self.after(100, self.poll_result_queue)   # start checking for results
-
-    def run_yolo(self):
-        """Runs on background thread — no Tkinter calls in here."""
-        try:
-            if self.detector is None:
-                self.detector = LicensePlateDetection()
-            self.detector.startup_check()
-            name_list = self.detector.video_capture_with_yolo(stop_event=self.stop_event)
-
-            if len(name_list) > 1:
-                image_name = name_list[1]
-                _, detected = self.detector.perform_ocr(image_name=image_name)
-            else:
-                image_name = name_list[0]
-
-            final_name, final_result = self.detector.image_processing_pipeline(image_name=image_name)
-            text, detected = self.detector.perform_ocr(image_name=final_name, image_array=final_result)
-
-            self.result_queue.put(("done", text, detected))
-        except Exception as e:
-            self.result_queue.put(("error", str(e), False))
-
-    def poll_result_queue(self):
-        """Runs on main thread — safe to touch shared_data/widgets here."""
-        try:
-            status, text, detected = self.result_queue.get_nowait()
-            if status == "done" and detected:
-                self.controller.shared_data["license_plate"].set(text.strip())
-                print(f"DEBUG: Detected plate -> {text}")
-            elif status == "error":
-                print(f"Detection error: {text}")
-            else:
-                print("No plate detected")
-        except queue.Empty:
-            if self.detection_thread and self.detection_thread.is_alive():
-                self.after(100, self.poll_result_queue)  # keep polling
-            return
-
-    def stop_detection(self):
-        self.stop_event.set()
-        print("Stopping detection...")
+    
 
     def on_size_selected(self, event=None):
         self.controller.shared_data["floor"] = None

@@ -85,7 +85,7 @@ class LicensePlateDetection:
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                     cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                    if class_id == 2 and conf > 0.65:
+                    if conf > 0.65:
                         car_x1, car_y1, car_x2, car_y2 = x1, y1, x2, y2
                         cropped_car_capture = frame[car_y1:car_y2, car_x1:car_x2]
 
@@ -108,7 +108,7 @@ class LicensePlateDetection:
         cv2.destroyAllWindows()
         return name_list
 
-    def display_image(self, image_name:str, title:str):
+    def display_image_tk(self, image_name:str, title:str):
         """Display captured image"""
         root=Tk()
         root.title(f"{title}")
@@ -120,6 +120,17 @@ class LicensePlateDetection:
         root.after(3000,root.destroy)
         root.mainloop() # wont close until user closes window, root.after sets a timer 
         # Display Car Cropped Capture
+
+    def display_image(self, image_name: str, title: str):
+        """Display captured image using OpenCV instead of a second Tk root."""
+        image_path = os.path.join(self.folder_path, image_name)
+        img = cv2.imread(image_path)
+        if img is None:
+            print(f"Could not load image for display: {image_path}")
+            return
+        cv2.imshow(title, img)
+        cv2.waitKey(3000)          # shows for 3 seconds
+        cv2.destroyWindow(title)
          
     def perform_ocr(self, image_name:str, image_array: Optional[Any] = None):
         """OCR PIPELINE"""
@@ -229,29 +240,26 @@ class Detector:
     def __init__(self):
         self.License_Plate_Detector = LicensePlateDetection()
 
-    def start(self):
+    def start(self, stop_event):
         print("STARTING APPLICATION . . .")
         self.License_Plate_Detector.startup_check()
-        name_list = self.License_Plate_Detector.video_capture_with_yolo()
+        name_list = self.License_Plate_Detector.video_capture_with_yolo(stop_event)
         if len(name_list) > 1:
             image_name = name_list[1]
-            # Perform EarlyOCR on the YOLO cropped image
-            _ , detected = self.License_Plate_Detector.perform_ocr(image_name=image_name)
-            print("YOLO OCR SUCCESS")
+            text, detected = self.License_Plate_Detector.perform_ocr(image_name=image_name)
+            if detected:
+                print("YOLO OCR SUCCESS")
+                return text
+            image_name = name_list[0]
+            return text
         else:
             image_name = name_list[0]
 
         final_name, final_result = self.License_Plate_Detector.image_processing_pipeline(image_name = image_name)
-        _ , detected = self.License_Plate_Detector.perform_ocr(image_name=final_name, image_array=final_result)
+        text , detected = self.License_Plate_Detector.perform_ocr(image_name=final_name, image_array=final_result)
         #self.License_Plate_Detector.cleanup(detected_status=detected)
+        return text
 
 if __name__ == "__main__":
     app = Detector()
-    app.start()
-
-
-
-
-
-
-
+    text = app.start(stop_event=None)
