@@ -1,7 +1,11 @@
+.env
 venv/
 # dont track images
 frame*.jpg
 # Block any folder starting with 202
 202*/
-# Block any specific image inside any 202 folder
+# Block any specific image inside any 202 folder 
 202*/*.jpg
+.vscode/
+__pycache__/
+backend/yolo26n.pt
