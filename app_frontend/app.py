@@ -8,6 +8,7 @@ from typing import Final
 import psycopg
 import datetime
 from backend.LicensePlateDetector import Detector
+import math
 # Assuming your class is in a file named detector_module.py
 # from detector_module import LicensePlateDetection 
 
@@ -479,7 +480,20 @@ class Page2(tk.Frame):
                     return -1
 
     def calculate_bill_amount(self, duration, entry_time, exit_time, centre_id, wing, floor, spot_number):
-        self.mark_exit(duration, 100, entry_time, exit_time, centre_id, wing, floor, spot_number)
+        total_hours = math.ceil(duration.total_seconds()/3600)
+        extra_cost = 0
+        base_amount = 40 if self.controller.shared_data["size"].get() == "Four Wheeler" else 20
+        if total_hours <= 3:
+            extra_cost = 0
+        elif 3 > total_hours < 4 :
+            extra_cost = 0.30 * (total_hours - 3)
+        elif 4 <= total_hours <5:
+            extra_cost = 0.30 + (0.40 * (total_hours - 4))
+        else:
+            extra_cost = 0.30+0.40+(0.50 * (total_hours - 5))
+        final_amount = base_amount + extra_cost
+        
+        self.mark_exit(duration, final_amount, entry_time, exit_time, centre_id, wing, floor, spot_number)
 
     def mark_exit(self, duration, amount, entry_time, exit_time, centre_id, wing, floor, spot_number):
         with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
