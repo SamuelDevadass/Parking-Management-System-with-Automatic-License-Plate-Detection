@@ -249,17 +249,17 @@ class Detector:
             text, detected = self.License_Plate_Detector.perform_ocr(image_name=image_name)
             if detected:
                 print("YOLO OCR SUCCESS")
-                return text
+                return text, self.License_Plate_Detector.folder_path
             image_name = name_list[0]
-            return text
+            return text,self.License_Plate_Detector.folder_path
         else:
             image_name = name_list[0]
 
         final_name, final_result = self.License_Plate_Detector.image_processing_pipeline(image_name = image_name)
         text , detected = self.License_Plate_Detector.perform_ocr(image_name=final_name, image_array=final_result)
         #self.License_Plate_Detector.cleanup(detected_status=detected)
-        return text
+        return text,self.License_Plate_Detector.folder_path
 
 if __name__ == "__main__":
     app = Detector()
-    text = app.start(stop_event=None)
+    text, app.License_Plate_Detector.folder_path = app.start(stop_event=None)

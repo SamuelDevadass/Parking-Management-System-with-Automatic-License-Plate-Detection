@@ -29,7 +29,8 @@ class ParkingApp(tk.Tk):
             "floor":None,
             "spot_number":None,
             "size":tk.StringVar(),
-            "owner_id":tk.StringVar()}
+            "owner_id":tk.StringVar(),
+            "folder_path":tk.StringVar()}
         
         self.container = tk.Frame(self)
         self.update()
@@ -204,7 +205,8 @@ class Detection_Page(tk.Frame):
         try:
             if self.detector is None:
                 self.detector = Detector()
-            text = self.detector.start(stop_event = self.stop_event)
+            text, folder_path = self.detector.start(stop_event = self.stop_event)
+            self.controller.shared_data["folder_path"].set(folder_path)
             detected = bool(text and text.strip())
             self.result_queue.put(("done", text, detected))
         except Exception as e:
@@ -435,14 +437,15 @@ class Page2(tk.Frame):
         with psycopg.connect(self.controller.CONNECTION_STRING) as conn:
             with conn.cursor() as cur:
                 cur.execute("""INSERT INTO 
-                                parking_log (entry_time, license_number, centre_id, wing, floor, spot_number)
-                                VALUES (%s,%s,%s,%s,%s,%s)""",
+                                parking_log (entry_time, license_number, centre_id, wing, floor, spot_number,image_folder_path)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s)""",
                                 (datetime.datetime.now(),
                                 self.controller.shared_data["license_plate"].get(),
                                 self.controller.shared_data["centre_id"],
                                 self.controller.shared_data["wing"].get(),
                                 self.controller.shared_data["floor"],
-                                self.controller.shared_data["spot_number"]))
+                                self.controller.shared_data["spot_number"],
+                                self.controller.shared_data["folder_path"].get()))
 
                 cur.execute("""UPDATE has_parking_spot
                                 SET availability = False
