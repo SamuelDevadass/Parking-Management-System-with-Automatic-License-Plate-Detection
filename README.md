@@ -4,17 +4,23 @@
 
 STAND ALONE PROTOTYPE APPLICATION WITH FULLY FUNCTIONAL DATABASE AND AUTOMATIC PLATE DETECTION
 
+## Video Walkthrough
+
+[![Watch the Demo Video](https://img.shields.io/badge/▶_Watch_Demo_Video_on_YouTube-Click_To_Play-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/-zj_sYQJUuc)
+
 ### DATABASE
 
 Implemented using PostGreSQL and Psycopg
 
 Designed to support organizations with multiple centres, wings, floors and spots
     
-    Eg: Organization Seasons Mall
+Eg:
+
+        Organization Seasons Mall
             Centre: Seasons Mall Parking Centre
                 Wing:   Seasons Mall Parking Centre Wing 1
-                Floors: B1,B2,B3
-                Spots: Multiple spots for Two Wheelers and Four Wheelers Available per floor
+                    Floors: B1,B2,B3
+                        Spots: Multiple spots for Two Wheelers and Four Wheelers Available per floor
 Supports comprehensive logging for robust performance
 
 ### USER INTERFACE
@@ -23,11 +29,13 @@ Implemented using TKinter
 
 Designed to support multiple pages dedicated to specific user activities
     
-    Eg: Choose Wing
-        Automatic License Number Plate Detection
-        Input User Details
-        Mark Entry/Exit
-        Generate Bill 
+Eg: 
+    
+    Choose Wing
+    Automatic License Number Plate Detection
+    Input User Details
+    Mark Entry/Exit
+    Generate Bill 
 Supports Interactive design for enhanced efficiency
 
 ### AUTOMATIC LICENSE PLATE DETECTION
@@ -49,7 +57,7 @@ PostgreSQL, Psycopg, Tkinter, YOLO, EasyOCR, OpenCV, Pillow, RapidOCR
 
 #### CONFIGURATIONS
 
-    i. Folder Structure
+i. Folder Structure
     
     root/
     -   .env
@@ -70,54 +78,58 @@ PostgreSQL, Psycopg, Tkinter, YOLO, EasyOCR, OpenCV, Pillow, RapidOCR
     -       .sql
     +---venv
 
-    ii. Environment Variables
+ii. Environment Variables
     
-    Configure following DB variables to develop Psycopg connection string
+Configure following DB variables to develop Psycopg connection string
         
         DB_NAME = 
         DB_USER = 
         DB_PW = 
         DB_HOST = 
 
-    iii. Environment Setup
+iii. Environment Setup
     
-    -> Clone the repository/branch using command: 
+-> Clone the repository/branch using command: 
     
-    -> Create venv using command python -m create venv venv
+-> Create venv using command python -m create venv venv
     
-    -> Activate the venv
+-> Activate the venv
     
-    -> Install requirements using command pip install -r requirements.txt
+-> Install requirements using command:
     
-       (Incase required, install other requirements from requirements.bak file)
+    pip install -r requirements.txt
     
-    -> Implement the DB using postgresql with the SQL from ./db/.sql
+(Incase required, install other requirements from requirements.bak file)
     
-       Refer to diagrams in ./db and issues for detailed Schema and ER diagram
+-> Implement the DB using postgresql with the SQL from ./db/.sql
     
-    -> Run the application using the command python -m app_frontend.app
+Refer to diagrams in ./db and issues for detailed Schema and ER diagram
+    
+-> Run the application using the command:
+    
+    python -m app_frontend.app
 
 #### PRO TIPS
 
-    i. Ensure the .gitignore contains the lines:
+i. Ensure the .gitignore contains the lines:
 
         frame*.jpg
         202*/
         202*/*.jpg
       
-      This ensures the folders created during YOLO capture cycles are not tracked by Git
+This ensures the folders created during YOLO capture cycles are not tracked by Git
 
-    ii. venv startup:
+ii. venv startup:
     
         -> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Remote
     
         -> ./venv/scripts/Activate
 
-    iii. Pipreqs library 
+iii. Pipreqs library 
     
-         To add only those libraries actually imported in the files
-    
-         Command: pipreqs . --force
+To add only those libraries actually imported in the files use: 
+
+     pipreqs . --force
 
 # CITATION
 
