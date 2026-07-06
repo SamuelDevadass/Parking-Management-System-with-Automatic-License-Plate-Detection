@@ -4,6 +4,10 @@
 
 STAND ALONE PROTOTYPE APPLICATION WITH FULLY FUNCTIONAL DATABASE AND AUTOMATIC PLATE DETECTION
 
+## Video Walkthrough
+
+[![Watch the Demo Video](https://img.shields.io/badge/▶_Watch_Demo_Video_on_YouTube-Click_To_Play-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/-zj_sYQJUuc)
+
 ### DATABASE
 
 Implemented using PostGreSQL and Psycopg
