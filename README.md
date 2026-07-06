@@ -49,7 +49,7 @@ PostgreSQL, Psycopg, Tkinter, YOLO, EasyOCR, OpenCV, Pillow, RapidOCR
 
 #### CONFIGURATIONS
 
-    i. Folder Structure
+i. Folder Structure
     
     root/
     -   .env
@@ -70,7 +70,7 @@ PostgreSQL, Psycopg, Tkinter, YOLO, EasyOCR, OpenCV, Pillow, RapidOCR
     -       .sql
     +---venv
 
-    ii. Environment Variables
+ii. Environment Variables
     
     Configure following DB variables to develop Psycopg connection string
         
@@ -79,7 +79,7 @@ PostgreSQL, Psycopg, Tkinter, YOLO, EasyOCR, OpenCV, Pillow, RapidOCR
         DB_PW = 
         DB_HOST = 
 
-    iii. Environment Setup
+iii. Environment Setup
     
     -> Clone the repository/branch using command: 
     
