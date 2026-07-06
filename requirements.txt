@@ -1,6 +1,8 @@
 easyocr==1.7.2
-numpy==2.5.0
+numpy==2.5.1
 opencv_python==4.13.0.92
-Pillow==12.2.0
+Pillow==12.3.0
+psycopg==3.3.4
+python-dotenv==1.2.2
 rapidocr_onnxruntime==1.2.3
 ultralytics==8.4.63
