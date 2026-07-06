@@ -133,9 +133,9 @@ To add only those libraries actually imported in the files use:
 
 # CITATION
 
-If you use this project, please credit https://github.com/SamuelDevadass/License-Plate-Detector
+If you use this project, please credit https://github.com/SamuelDevadass/Parking-Management-System-with-Automatic-License-Plate-Detection
 
-Citation: [Parking Management & License Number Detection / Application], Samuel (2026). Available at: [https://github.com/SamuelDevadass/License-Plate-Detector/tree/Application]
+Citation: [Parking Management & License Number Detection / Application], Samuel (2026). Available at: [https://github.com/SamuelDevadass/Parking-Management-System-with-Automatic-License-Plate-Detection]
 
 
     
