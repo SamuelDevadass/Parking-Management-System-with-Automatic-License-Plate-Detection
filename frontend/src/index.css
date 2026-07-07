@@ -1,0 +1,460 @@
+/* =========================================================================
+   DESIGN TOKENS
+   Theme: "Gatehouse" — a night-shift parking attendant's console.
+   Dark asphalt surfaces, gate-arm amber for action/focus, plate-style
+   monospace for anything identifying a vehicle.
+   ========================================================================= */
+:root {
+  --color-bg: #14181c;          /* asphalt */
+  --color-surface: #1e242b;     /* panel */
+  --color-surface-raised: #242b33;
+  --color-border: #2c343d;
+  --color-text: #edeff2;
+  --color-text-muted: #8b95a1;
+  --color-accent: #f2b705;      /* gate-arm amber — the one bold color */
+  --color-accent-dim: #7a600a;
+  --color-success: #3fb88f;     /* free spot */
+  --color-danger: #e5533d;      /* full / stop */
+
+  --font-display: "Oswald", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --radius: 10px;
+  --shadow-panel: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+body {
+  background-image: radial-gradient(circle at 15% 0%, #1a2027 0%, var(--color-bg) 55%);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+/* Visible keyboard focus everywhere, not just on click */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =========================================================================
+   APP SHELL
+   ========================================================================= */
+.app-shell {
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 16px;
+}
+
+.app-header .brand {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-header .brand span {
+  color: var(--color-accent);
+}
+
+.app-header .subtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+/* =========================================================================
+   STEP BAR
+   Numbering is meaningful here — this genuinely is a fixed sequence a
+   vehicle moves through, gate to gate.
+   ========================================================================= */
+.step-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.step-bar__marker {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.step-bar__label {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .step-bar__label {
+    display: inline;
+  }
+}
+
+.step-bar__line {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 2px;
+}
+
+.step-bar__item--active .step-bar__marker {
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+  background: var(--color-accent);
+}
+
+.step-bar__item--active .step-bar__label {
+  color: var(--color-text);
+}
+
+.step-bar__item--done .step-bar__marker {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background: transparent;
+}
+
+/* =========================================================================
+   PANEL / CARD
+   ========================================================================= */
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel__title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.panel__hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: -12px 0 0;
+}
+
+/* =========================================================================
+   FORM ELEMENTS
+   ========================================================================= */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.field input,
+.field select {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-family: var(--font-body);
+}
+
+.field input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.field--mono input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 520px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   BUTTONS
+   ========================================================================= */
+.btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.08s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  border-color: var(--color-text-muted);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #1a1400;
+}
+
+.btn--primary:hover {
+  border-color: var(--color-accent);
+  filter: brightness(1.05);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================================
+   SIGNATURE ELEMENT: PLATE CHIP
+   Any license plate in the UI renders as an actual stenciled plate —
+   embossed border, bolt holes, monospace uppercase. This is the one
+   recurring, memorable visual idea the whole app is built around.
+   ========================================================================= */
+.plate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #f7f7f3, #e6e6de);
+  color: #14181c;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  border-radius: 5px;
+  border: 2px solid #14181c;
+  box-shadow:
+    inset 0 0 0 2px #ffffffaa,
+    0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.plate-chip__bolt {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #9a9a90;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.plate-chip--empty {
+  color: #8b8b80;
+  font-weight: 600;
+}
+
+.plate-chip--sm {
+  font-size: 14px;
+  padding: 5px 10px;
+}
+
+/* =========================================================================
+   MISC
+   ========================================================================= */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.status-dot--running {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px rgba(242, 183, 5, 0.18);
+}
+
+.status-dot--success {
+  background: var(--color-success);
+}
+
+.status-dot--danger {
+  background: var(--color-danger);
+}
+
+.availability-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 520px) {
+  .availability-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.availability-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  background: var(--color-surface-raised);
+  text-align: center;
+}
+
+.availability-card__count {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.availability-card__count--zero {
+  color: var(--color-danger);
+}
+
+.availability-card__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.bill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 15px;
+}
+
+.bill-row:last-of-type {
+  border-bottom: none;
+}
+
+.bill-row__label {
+  color: var(--color-text-muted);
+}
+
+.bill-total {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--color-accent);
+  text-align: right;
+}
+
+.error-banner {
+  background: rgba(229, 83, 61, 0.12);
+  border: 1px solid var(--color-danger);
+  color: #ffb4a8;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+}
