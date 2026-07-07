@@ -48,7 +48,7 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          Gate<span>house</span>
+        Parking Management System<span> - License Plate Detection</span>
         </div>
         <div className="subtitle">Parking Console</div>
       </header>
