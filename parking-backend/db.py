@@ -10,7 +10,7 @@ from typing import Optional
 import psycopg
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv("./.env")
 
 CONNECTION_STRING = (
     f"dbname={os.getenv('DB_NAME')} "

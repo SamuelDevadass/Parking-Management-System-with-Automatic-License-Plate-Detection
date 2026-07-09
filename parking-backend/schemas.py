@@ -23,8 +23,8 @@ class EntryPayload(BaseModel):
     license_plate: str
     centre_id: int
     wing: str
-    floor: int
-    spot_number: int
+    floor: str
+    spot_number: str
     folder_path: Optional[str] = ""
 
 
