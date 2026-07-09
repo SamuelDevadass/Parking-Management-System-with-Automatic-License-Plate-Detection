@@ -1,0 +1,14 @@
+# Core API
+fastapi
+uvicorn[standard]
+psycopg[binary]
+python-dotenv
+pydantic
+
+# Detection pipeline (heavy — only needed for /api/detection/*)
+opencv-python
+pillow
+numpy
+rapidocr-onnxruntime
+easyocr
+ultralytics
