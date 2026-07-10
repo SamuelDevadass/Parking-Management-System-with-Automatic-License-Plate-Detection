@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS public.parking_log
     centre_id integer,
     wing text COLLATE pg_catalog."default" NOT NULL,
     floor text COLLATE pg_catalog."default" NOT NULL,
-    spot_number character varying(7) COLLATE pg_catalog."default",
+    spot_number text COLLATE pg_catalog."default",
     duration interval,
     amount numeric(10,2),
     image_folder_path text COLLATE pg_catalog."default"
