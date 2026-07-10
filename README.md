@@ -125,8 +125,3 @@ If you use this project, please credit https://github.com/SamuelDevadass/License
 
 Citation: [Parking Management & License Number Detection / Application], Samuel (2026). Available at: [https://github.com/SamuelDevadass/License-Plate-Detector/tree/Application]
 
-
-    
-
-
-

@@ -11,9 +11,9 @@
   --color-border: #2c343d;
   --color-text: #edeff2;
   --color-text-muted: #8b95a1;
-  --color-accent: #f2b705;      /* gate-arm amber — the one bold color */
-  --color-accent-dim: #7a600a;
-  --color-success: #3fb88f;     /* free spot */
+  --color-accent: #00b6fe;      /* gate-arm amber — the one bold color */
+  --color-accent-dim: #3867ff;
+  --color-success: #04bf17;     /* free spot */
   --color-danger: #e5533d;      /* full / stop */
 
   --font-display: "Oswald", sans-serif;
