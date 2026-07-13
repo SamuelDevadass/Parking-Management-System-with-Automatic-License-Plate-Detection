@@ -1,12 +1,5 @@
-"""
-Database layer. Every function here is a near-direct port of a query that
-used to live inline inside a Tkinter widget method — pulled out so routes
-in main.py stay thin, and so the SQL is in exactly one place.
-"""
-
 import os
 from typing import Optional
-
 import psycopg
 from dotenv import load_dotenv
 
@@ -16,8 +9,7 @@ CONNECTION_STRING = (
     f"dbname={os.getenv('DB_NAME')} "
     f"user={os.getenv('DB_USER')} "
     f"password={os.getenv('DB_PW')} "
-    f"host={os.getenv('DB_HOST')}"
-)
+    f"host={os.getenv('DB_HOST')}")
 
 
 def get_connection():
@@ -25,7 +17,7 @@ def get_connection():
 
 
 # ---------------------------------------------------------------------------
-# Wings  (was Select_Wing_Page.get_wings_list / get_centre)
+# Wings
 # ---------------------------------------------------------------------------
 
 def list_wings() -> list[str]:
