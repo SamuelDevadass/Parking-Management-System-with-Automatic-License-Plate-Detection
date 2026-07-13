@@ -19,10 +19,12 @@ import BillingPage from "./pages/BillingPage.jsx";
   object, and React re-renders whatever reads that state. That's the one
   habit to build first; everything else in this codebase follows from it.
 */
-export default function App() {
+export default function App() 
+{
   const [page, setPage] = useState("wing");
 
-  const [data, setData] = useState({
+  const [data, setData] = useState
+  ({
     licensePlate: "",
     wing: "",
     centre_id: null,
@@ -34,11 +36,13 @@ export default function App() {
   });
 
   // Shallow-merges patch into data, e.g. updateData({ wing: "A" })
-  function updateData(patch) {
+  function updateData(patch) 
+  {
     setData((prev) => ({ ...prev, ...patch }));
   }
 
-  function goTo(nextPage) {
+  function goTo(nextPage) 
+  {
     setPage(nextPage);
   }
 

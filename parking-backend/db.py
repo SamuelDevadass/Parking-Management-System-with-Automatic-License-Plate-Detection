@@ -34,23 +34,19 @@ def get_centre_for_wing(wing: str) -> Optional[int]:
 
 
 # ---------------------------------------------------------------------------
-# Spot availability  (was Empty_Spots_Page.get_free_spots_count)
+# Spots
 # ---------------------------------------------------------------------------
 
 def get_spot_availability(wing: str) -> dict:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """SELECT COUNT(*) FROM has_parking_spot
-               WHERE wing = %s AND size = 'Two Wheeler' AND availability = True""",
-            (wing,),
-        )
+        cur.execute("""SELECT COUNT(*) FROM has_parking_spot
+                        WHERE wing = %s AND size = 'Two Wheeler' AND availability = True""",
+                        (wing,),)
         two_wheeler = cur.fetchone()[0]
 
-        cur.execute(
-            """SELECT COUNT(*) FROM has_parking_spot
-               WHERE wing = %s AND size = 'Four Wheeler' AND availability = True""",
-            (wing,),
-        )
+        cur.execute("""SELECT COUNT(*) FROM has_parking_spot
+                        WHERE wing = %s AND size = 'Four Wheeler' AND availability = True""",
+                        (wing,),)
         four_wheeler = cur.fetchone()[0]
 
     return {"two_wheeler": two_wheeler, "four_wheeler": four_wheeler}

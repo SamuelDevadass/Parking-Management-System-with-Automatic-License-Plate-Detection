@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Api } from "../api/client.js";
 
-export default function EmptySpotsPage({ data, goTo }) {
+export default function EmptySpotsPage({ data, goTo }) 
+{
   const [counts, setCounts] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  function refresh() {
+  function refresh() 
+  {
     setLoading(true);
     Api.getSpotAvailability(data.wing)
       .then(setCounts)
@@ -26,15 +28,18 @@ export default function EmptySpotsPage({ data, goTo }) {
 
       {error && <div className="error-banner">{error}</div>}
 
-      {loading ? (
+      {loading ? 
+      (
         <p>Checking availability…</p>
       ) : noneFree ? (
         <div className="error-banner">No free spots available in this wing.</div>
-      ) : (
+      ) : 
+      (
         <div className="availability-grid">
           <div className="availability-card">
             <div
-              className={`availability-card__count ${
+              className=
+              {`availability-card__count ${
                 counts.two_wheeler === 0 ? "availability-card__count--zero" : ""
               }`}
             >
@@ -44,7 +49,8 @@ export default function EmptySpotsPage({ data, goTo }) {
           </div>
           <div className="availability-card">
             <div
-              className={`availability-card__count ${
+              className=
+              {`availability-card__count ${
                 counts.four_wheeler === 0 ? "availability-card__count--zero" : ""
               }`}
             >

@@ -26,12 +26,15 @@
   GET  /api/bills/{license_plate}/latest     -> { entry_time, exit_time, duration, amount, owner_name }
 */
 
-async function request(path, options = {}) {
-  const res = await fetch(`/api${path}`, {
+async function request(path, options = {}) 
+{
+  const res = await fetch(`/api${path}`, 
+  {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
-  if (!res.ok) {
+  if (!res.ok) 
+  {
     const text = await res.text().catch(() => "");
     throw new Error(`${options.method || "GET"} ${path} failed (${res.status}): ${text}`);
   }
