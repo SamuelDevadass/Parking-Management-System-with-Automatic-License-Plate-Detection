@@ -1,6 +1,6 @@
-# APPLICATION
+# FullStack Web Application
 
-## Parking Management System with License Plate Detection
+## Smart Parking Management System with License Plate Detection
 
 STAND ALONE PROTOTYPE APPLICATION WITH FULLY FUNCTIONAL DATABASE AND AUTOMATIC PLATE DETECTION
 
@@ -37,6 +37,15 @@ Integrated YOLO_Monolith for Automatic License Number Detection
 Implemented using YOLO, OpenCV, EasyOCR and Pillow
 
 Includes automatic fallbacks with custom image enhancement pipeline against confidence score checks
+
+
+-----------------------------------------------------------------------------------------------------
+## IMPROVEMENTS OVER APPLICATION
+
+i. Detection happens in the same window
+
+
+ii. Visual depiction of free and occupied spots
 
 
 -----------------------------------------------------------------------------------------------------

@@ -22,7 +22,7 @@ export default function EmptySpotsPage({ data, goTo }) {
   return (
     <div className="panel">
       <h1 className="panel__title">{data.wing}</h1>
-      <p className="panel__hint">Current availability for this wing.</p>
+      <p className="panel__hint">Available spots</p>
 
       {error && <div className="error-banner">{error}</div>}
 
@@ -40,7 +40,7 @@ export default function EmptySpotsPage({ data, goTo }) {
             >
               {counts.two_wheeler}
             </div>
-            <div className="availability-card__label">Two-Wheeler Free</div>
+            <div className="availability-card__label">Two-Wheeler Spots Free</div>
           </div>
           <div className="availability-card">
             <div
@@ -50,7 +50,7 @@ export default function EmptySpotsPage({ data, goTo }) {
             >
               {counts.four_wheeler}
             </div>
-            <div className="availability-card__label">Four-Wheeler Free</div>
+            <div className="availability-card__label">Four-Wheeler Spots Free</div>
           </div>
         </div>
       )}
