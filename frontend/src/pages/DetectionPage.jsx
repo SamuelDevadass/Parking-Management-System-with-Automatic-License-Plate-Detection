@@ -105,7 +105,7 @@ export default function DetectionPage({ data, updateData, goTo })
 
       <PlateChip value={data.licensePlate} />
 
-      <div className="btn-row">
+      <div className="btn-row btn--spaced">
         <button className="btn btn--primary" disabled={!data.licensePlate} 
           onClick={() => goTo("owner")}
         > Continue
@@ -113,7 +113,7 @@ export default function DetectionPage({ data, updateData, goTo })
 
         <button className="btn" disabled={!data.wing}
           onClick={() => goTo("spots")}
-        > See Empty Spots
+        > Empty Spots
         </button>
       </div>
     </div>

@@ -284,6 +284,12 @@ button {
   cursor: not-allowed;
 }
 
+.btn--spaced {
+  display: flex;
+  justify-content: space-between;
+  width: 32%;
+}
+
 .btn--primary {
   background: var(--color-accent);
   border-color: var(--color-accent);

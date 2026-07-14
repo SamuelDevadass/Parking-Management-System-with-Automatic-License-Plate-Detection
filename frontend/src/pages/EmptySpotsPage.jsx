@@ -61,7 +61,7 @@ export default function EmptySpotsPage({ data, goTo })
         </div>
       )}
 
-      <div className="btn-row">
+      <div className="btn-row btn--spaced">
         <button className="btn btn--primary" onClick={() => goTo("detect")}>
           Continue
         </button>
