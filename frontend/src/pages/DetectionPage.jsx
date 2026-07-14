@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Api } from "../api/client.js";
 import PlateChip from "../components/PlateChip.jsx";
 
-export default function DetectionPage({ data, updateData, goTo }) {
+export default function DetectionPage({ data, updateData, goTo }) 
+{
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
 
   // Clear the plate field each time this page is shown, same as
   // Detection_Page.on_show() -> clear_fields().
-  useEffect(() => {
+  useEffect(() => 
+  {
     updateData({ licensePlate: "" });
   }, []);
 
@@ -104,12 +106,14 @@ export default function DetectionPage({ data, updateData, goTo }) {
       <PlateChip value={data.licensePlate} />
 
       <div className="btn-row">
-        <button
-          className="btn btn--primary"
-          disabled={!data.licensePlate}
+        <button className="btn btn--primary" disabled={!data.licensePlate} 
           onClick={() => goTo("owner")}
-        >
-          Continue
+        > Continue
+        </button>
+
+        <button className="btn" disabled={!data.wing}
+          onClick={() => goTo("spots")}
+        > See Empty Spots
         </button>
       </div>
     </div>
