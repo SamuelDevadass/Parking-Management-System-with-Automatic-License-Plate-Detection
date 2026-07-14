@@ -42,7 +42,8 @@ async function request(path, options = {})
   return res.json();
 }
 
-export const Api = {
+export const Api = 
+{
   getWings: () => request("/wings"),
 
   getCentreForWing: (wing) => request(`/wings/${encodeURIComponent(wing)}/centre`),

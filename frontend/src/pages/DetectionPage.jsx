@@ -16,19 +16,27 @@ export default function DetectionPage({ data, updateData, goTo }) {
   // whether it's finished. This replaces the Tkinter combo of a background
   // thread + queue.Queue + self.after(100, poll) — same idea, just over
   // HTTP instead of in-process.
-  useEffect(() => {
+  useEffect(() => 
+    {
     if (!running) return;
-    const interval = setInterval(async () => {
-      try {
+    const interval = setInterval(async () => 
+    {
+      try 
+      {
         const result = await Api.getDetectionStatus();
-        if (result.status === "done") {
+        if (result.status === "done") 
+        {
           updateData({ licensePlate: result.license_plate || "" });
           setRunning(false);
-        } else if (result.status === "error") {
+        } 
+        else if (result.status === "error") 
+        {
           setError("Detection failed on the backend.");
           setRunning(false);
         }
-      } catch (err) {
+      } 
+      catch (err) 
+      {
         setError(err.message);
         setRunning(false);
       }
@@ -36,22 +44,32 @@ export default function DetectionPage({ data, updateData, goTo }) {
     return () => clearInterval(interval);
   }, [running]);
 
-  async function startDetection() {
+  async function startDetection() 
+  {
     setError(null);
-    try {
+    try 
+    {
       await Api.startDetection();
       setRunning(true);
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       setError(err.message);
     }
   }
 
-  async function stopDetection() {
-    try {
+  async function stopDetection() 
+  {
+    try 
+    {
       await Api.stopDetection();
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       setError(err.message);
-    } finally {
+    } 
+    finally 
+    {
       setRunning(false);
     }
   }
@@ -59,14 +77,11 @@ export default function DetectionPage({ data, updateData, goTo }) {
   return (
     <div className="panel">
       <h1 className="panel__title">Automatic License Plate Detection</h1>
-
       {error && <div className="error-banner">{error}</div>}
-
       <div className="status-row">
         <span className={`status-dot ${running ? "status-dot--running" : ""}`} />
         {running ? "Detection running…" : "Idle"}
       </div>
-
       <div className="btn-row">
         <button className="btn btn--primary" onClick={startDetection} disabled={running}>
           Start Detection
