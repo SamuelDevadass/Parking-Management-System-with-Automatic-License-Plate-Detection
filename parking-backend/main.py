@@ -91,21 +91,20 @@ def stop_detection():
 def get_vehicle(license_plate: str):
     vehicle = db.get_vehicle(license_plate)
     if vehicle is None:
-        raise HTTPException(status_code=404, detail="No vehicle found for that plate")
+        raise HTTPException(status_code=404, detail="""No details found for this license number. 
+                                                        Please enter details manually""")
     return vehicle
 
 
 @app.post("/api/vehicles")
 def save_vehicle(payload: VehiclePayload):
-    db.save_vehicle(
-        owner_id=payload.owner_id,
-        license_plate=payload.license_plate,
-        model=payload.model,
-        colour=payload.colour,
-        vehicle_type=payload.type,
-        phone=payload.phone,
-        name=payload.name,
-    )
+    db.save_vehicle(owner_id=payload.owner_id,
+                    license_plate=payload.license_plate,
+                    model=payload.model,
+                    colour=payload.colour,
+                    vehicle_type=payload.type,
+                    phone=payload.phone,
+                    name=payload.name,)
     return {"ok": True}
 
 

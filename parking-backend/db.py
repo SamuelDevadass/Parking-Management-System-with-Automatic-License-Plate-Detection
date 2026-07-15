@@ -58,11 +58,9 @@ def get_spot_availability(wing: str) -> dict:
 
 def get_vehicle(license_plate: str) -> Optional[dict]:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """SELECT owner_id, model, colour, type
-               FROM owns_vehicle WHERE license_number = %s""",
-            (license_plate,),
-        )
+        cur.execute("""SELECT owner_id, model, colour, type
+                        FROM owns_vehicle WHERE license_number = %s""",
+                        (license_plate,),)
         vehicle_row = cur.fetchone()
         if not vehicle_row:
             return None
@@ -84,32 +82,22 @@ def get_vehicle(license_plate: str) -> Optional[dict]:
     }
 
 
-def save_vehicle(
-    owner_id: str,
-    license_plate: str,
-    model: str,
-    colour: str,
-    vehicle_type: str,
-    phone: str,
-    name: str,
-) -> None:
+def save_vehicle( owner_id: str,license_plate: str,model: str,colour: str, 
+                  vehicle_type: str, phone: str,name: str,) -> None:
+    
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """INSERT INTO owner (owner_id, name) VALUES (%s, %s)
-               ON CONFLICT (owner_id) DO NOTHING""",
-            (owner_id, name),
-        )
-        cur.execute(
-            """INSERT INTO owner_phone (owner_id, phone) VALUES (%s, %s)
-               ON CONFLICT (owner_id, phone) DO NOTHING""",
-            (owner_id, phone),
-        )
-        cur.execute(
-            """INSERT INTO owns_vehicle (owner_id, license_number, model, colour, type)
-               VALUES (%s, %s, %s, %s, %s)
-               ON CONFLICT (license_number) DO NOTHING""",
-            (owner_id, license_plate, model, colour, vehicle_type),
-        )
+        cur.execute("""INSERT INTO owner (owner_id, name) VALUES (%s, %s)
+                        ON CONFLICT (owner_id) DO NOTHING""",
+                        (owner_id, name),)
+        
+        cur.execute("""INSERT INTO owner_phone (owner_id, phone) VALUES (%s, %s)
+                        ON CONFLICT (owner_id, phone) DO NOTHING""",
+                        (owner_id, phone),)
+        
+        cur.execute("""INSERT INTO owns_vehicle (owner_id, license_number, model, colour, type)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (license_number) DO NOTHING""",
+                        (owner_id, license_plate, model, colour, vehicle_type),)
         conn.commit()
 
 

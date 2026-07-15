@@ -1,56 +1,62 @@
 import { useState, useEffect } from "react";
 import { Api } from "../api/client.js";
 
-export default function OwnerDetailsPage({ data, updateData, goTo }) {
+export default function OwnerDetailsPage({ data, updateData, goTo }) 
+{
   const [form, setForm] = useState({ model: "", colour: "", phone: "", name: "" });
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
   // Reset the local form + shared owner/size fields each time this page
   // is shown, same as Page1.on_show() -> clear_fields().
-  useEffect(() => {
+  useEffect(() => 
+  {
     setForm({ model: "", colour: "", phone: "", name: "" });
     updateData({ ownerId: "", size: "" });
   }, []);
 
-  function setField(key, value) {
+  function setField(key, value) 
+  {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  async function fetchDetails() {
+  async function fetchDetails() 
+  {
     setError(null);
-    try {
+    try 
+    {
       const v = await Api.getVehicle(data.licensePlate);
       updateData({ ownerId: v.owner_id ?? "", size: v.type ?? "" });
       setForm({
-        model: v.model ?? "",
-        colour: v.colour ?? "",
-        phone: v.phone ?? "",
-        name: v.name ?? "",
+        model: v.model ?? "", colour: v.colour ?? "",
+        phone: v.phone ?? "", name: v.name ?? "",
       });
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       setError(err.message);
     }
   }
 
-  async function saveDetails() {
+  async function saveDetails() 
+  {
     setError(null);
     setSaving(true);
     const ownerId = data.ownerId || data.licensePlate;
-    try {
-      await Api.saveVehicle({
-        owner_id: ownerId,
-        license_plate: data.licensePlate,
-        model: form.model,
-        colour: form.colour,
-        type: data.size,
-        phone: form.phone,
-        name: form.name,
+    try 
+    {
+      await Api.saveVehicle({ 
+        owner_id: ownerId, license_plate: data.licensePlate, model: form.model,
+        colour: form.colour, type: data.size, phone: form.phone, name: form.name,
       });
       updateData({ ownerId });
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       setError(err.message);
-    } finally {
+    } 
+    finally 
+    {
       setSaving(false);
     }
   }
@@ -63,17 +69,14 @@ export default function OwnerDetailsPage({ data, updateData, goTo }) {
 
       <div className="field field--mono">
         <label>License Plate</label>
-        <input
-          value={data.licensePlate}
+        <input value={data.licensePlate}
           onChange={(e) => updateData({ licensePlate: e.target.value })}
         />
       </div>
 
       <div className="field">
         <label htmlFor="size-select">Vehicle Type</label>
-        <select
-          id="size-select"
-          value={data.size}
+        <select id="size-select" value={data.size}
           onChange={(e) => updateData({ size: e.target.value, floor: null, spotNumber: null })}
         >
           <option value="" disabled>
