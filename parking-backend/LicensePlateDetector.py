@@ -51,7 +51,7 @@ class LicensePlateDetection:
         print("Current Time: ", now)
 
         # New repository for current cycle
-        self.folder_path = now.strftime("%Y-%m-%d_%H-%M-%S") # os.mkdir() returns None hence create path as string and then create folder
+        self.folder_path = now.strftime("scans/%Y-%m-%d_%H-%M-%S") # os.mkdir() returns None hence create path as string and then create folder
         os.mkdir(self.folder_path)
 
     def video_capture_with_yolo(self, stop_event = None):
