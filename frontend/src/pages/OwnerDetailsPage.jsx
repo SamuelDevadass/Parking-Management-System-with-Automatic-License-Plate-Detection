@@ -6,6 +6,7 @@ export default function OwnerDetailsPage({ data, updateData, goTo })
   const [form, setForm] = useState({ model: "", colour: "", phone: "", name: "" });
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
 
   // Reset the local form + shared owner/size fields each time this page
   // is shown, same as Page1.on_show() -> clear_fields().
@@ -23,6 +24,7 @@ export default function OwnerDetailsPage({ data, updateData, goTo })
   async function fetchDetails() 
   {
     setError(null);
+    setFetching(true);
     try 
     {
       const v = await Api.getVehicle(data.licensePlate);
@@ -36,6 +38,10 @@ export default function OwnerDetailsPage({ data, updateData, goTo })
     {
       setError(err.message);
     }
+    finally
+    {
+      setFetching(false);
+    }
   }
 
   async function saveDetails() 
@@ -45,10 +51,9 @@ export default function OwnerDetailsPage({ data, updateData, goTo })
     const ownerId = data.ownerId || data.licensePlate;
     try 
     {
-      await Api.saveVehicle({ 
-        owner_id: ownerId, license_plate: data.licensePlate, model: form.model,
-        colour: form.colour, type: data.size, phone: form.phone, name: form.name,
-      });
+      await Api.saveVehicle({ owner_id: ownerId, license_plate: data.licensePlate, 
+                              model: form.model, colour: form.colour, type: data.size, 
+                              phone: form.phone, name: form.name,});
       updateData({ ownerId });
     } 
     catch (err) 
@@ -115,8 +120,8 @@ export default function OwnerDetailsPage({ data, updateData, goTo })
       </div>
 
       <div className="btn-row">
-        <button className="btn" onClick={fetchDetails}>
-          Fetch Details
+        <button className="btn" onClick={fetchDetails} disabled={fetching}>
+          {fetching ? "Fetching..." : "Fetch Details"}
         </button>
         <button className="btn" onClick={saveDetails} disabled={saving}>
           {saving ? "Saving…" : "Save Details"}
@@ -127,6 +132,9 @@ export default function OwnerDetailsPage({ data, updateData, goTo })
         <button className="btn btn--primary" onClick={() => goTo("entry-exit")}>
           Continue
         </button>
+        <button className="btn btn--primary" onClick={() => goTo("detect")}>
+          Back to Detection
+        </button> 
       </div>
     </div>
   );
