@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { Api } from "../api/client.js";
 import PlateChip from "../components/PlateChip.jsx";
 
-export default function BillingPage({ data, goTo }) {
+export default function BillingPage({ data, goTo }) 
+{
   const [bill, setBill] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => 
+  {
     setLoading(true);
     Api.getLatestBill(data.licensePlate)
       .then(setBill)

@@ -164,9 +164,8 @@ def get_active_session(license_plate: str) -> Optional[dict]:
 
 def get_vehicle_type(license_plate: str) -> Optional[str]:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            "SELECT type FROM owns_vehicle WHERE license_number = %s", (license_plate,)
-        )
+        cur.execute("""SELECT type FROM owns_vehicle 
+                        WHERE license_number = %s""", (license_plate,))
         row = cur.fetchone()
         return row[0] if row else None
 
@@ -188,29 +187,24 @@ def record_exit(entry_time, exit_time,
 
 
 # ---------------------------------------------------------------------------
-# Billing  (was Page3.fetch_bill)
+# Billing 
 # ---------------------------------------------------------------------------
 
 def get_latest_bill(license_plate: str) -> Optional[dict]:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """SELECT entry_time, exit_time, duration, amount
-               FROM parking_log
-               WHERE license_number = %s AND exit_time IS NOT NULL
-               ORDER BY exit_time DESC LIMIT 1""",
-            (license_plate,),
-        )
+        cur.execute("""SELECT entry_time, exit_time, duration, amount
+                        FROM parking_log WHERE license_number = %s AND exit_time IS NOT NULL
+                        ORDER BY exit_time DESC LIMIT 1""",
+                        (license_plate,),)
         row = cur.fetchone()
         if not row:
             return None
         entry_time, exit_time, duration, amount = row
 
-        cur.execute(
-            """SELECT o.name FROM owner o
-               JOIN owns_vehicle v ON v.owner_id = o.owner_id
-               WHERE v.license_number = %s""",
-            (license_plate,),
-        )
+        cur.execute("""SELECT o.name FROM owner o
+                        JOIN owns_vehicle v ON v.owner_id = o.owner_id
+                        WHERE v.license_number = %s""",
+                        (license_plate,),)
         name_row = cur.fetchone()
 
     return {

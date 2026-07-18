@@ -95,7 +95,7 @@ export default function EntryExitPage({ data, updateData, goTo })
       </div>
 
       <div className="btn-row">
-        <button className="btn btn--primary" onClick={() => goTo("billing")}>
+        <button className="btn btn--ghost" onClick={() => goTo("billing")}>
           Generate Bill
         </button>
         <button className="btn btn--ghost" onClick={() => goTo("spots")}>
