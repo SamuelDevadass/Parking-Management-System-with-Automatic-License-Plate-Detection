@@ -102,7 +102,7 @@ def save_vehicle( owner_id: str,license_plate: str,model: str,colour: str,
 
 
 # ---------------------------------------------------------------------------
-# Spots for entry  (was Page2.get_available_spots)
+# Spots for entry 
 # ---------------------------------------------------------------------------
 
 def get_available_spots(wing: str, centre_id: int, size: str) -> list[dict]:
@@ -119,47 +119,37 @@ def get_available_spots(wing: str, centre_id: int, size: str) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Entry  (was Page2.mark_entry)
+# Entry  
 # ---------------------------------------------------------------------------
 
-def mark_entry(
-    entry_time,
-    license_plate: str,
-    centre_id: int,
-    wing: str,
-    floor: int,
-    spot_number: int,
-    folder_path: str,
-) -> None:
+def mark_entry(entry_time,
+                license_plate: str, centre_id: int,
+                wing: str, floor: int,
+                spot_number: int, folder_path: str, ) -> None:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """INSERT INTO parking_log
-               (entry_time, license_number, centre_id, wing, floor, spot_number, image_folder_path)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (entry_time, license_plate, centre_id, wing, floor, spot_number, folder_path),
-        )
-        cur.execute(
-            """UPDATE has_parking_spot SET availability = False
-               WHERE centre_id = %s AND wing = %s AND floor = %s AND spot_number = %s""",
-            (centre_id, wing, floor, spot_number),
-        )
+        cur.execute("""INSERT INTO parking_log
+                    (entry_time,license_number, centre_id, 
+                     wing, floor, spot_number, image_folder_path)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                    (entry_time, license_plate, centre_id, wing, floor, spot_number, folder_path),)
+        
+        cur.execute("""UPDATE has_parking_spot SET availability = False
+                        WHERE centre_id = %s AND wing = %s AND floor = %s AND spot_number = %s""",
+                        (centre_id, wing, floor, spot_number),)
         conn.commit()
 
 
 # ---------------------------------------------------------------------------
-# Exit  (was Page2.calculate_duration / calculate_bill_amount / mark_exit)
+# Exit 
 # ---------------------------------------------------------------------------
 
 def get_active_session(license_plate: str) -> Optional[dict]:
     """The most recent parking_log row for this plate with no exit_time yet."""
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """SELECT entry_time, centre_id, wing, floor, spot_number
-               FROM parking_log
-               WHERE license_number = %s AND exit_time IS NULL
-               ORDER BY entry_time DESC LIMIT 1""",
-            (license_plate,),
-        )
+        cur.execute("""SELECT entry_time, centre_id, wing, floor, spot_number
+                        FROM parking_log WHERE license_number = %s 
+                        AND exit_time IS NULL ORDER BY entry_time DESC LIMIT 1""",
+                        (license_plate,),)
         row = cur.fetchone()
     if not row:
         return None
@@ -181,28 +171,19 @@ def get_vehicle_type(license_plate: str) -> Optional[str]:
         return row[0] if row else None
 
 
-def record_exit(
-    entry_time,
-    exit_time,
-    duration,
-    amount: float,
-    centre_id: int,
-    wing: str,
-    floor: int,
-    spot_number: int,
-) -> None:
+def record_exit(entry_time, exit_time,
+                duration, amount: float,
+                centre_id: int, wing: str,
+                floor: int, spot_number: int, ) -> None:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """UPDATE parking_log
-               SET exit_time = %s, duration = %s, amount = %s
-               WHERE entry_time = %s AND exit_time IS NULL""",
-            (exit_time, duration, amount, entry_time),
-        )
-        cur.execute(
-            """UPDATE has_parking_spot SET availability = True
-               WHERE centre_id = %s AND wing = %s AND floor = %s AND spot_number = %s""",
-            (centre_id, wing, floor, spot_number),
-        )
+        cur.execute("""UPDATE parking_log
+                        SET exit_time = %s, duration = %s, amount = %s
+                        WHERE entry_time = %s AND exit_time IS NULL""",
+                        (exit_time, duration, amount, entry_time),)
+        
+        cur.execute("""UPDATE has_parking_spot SET availability = True
+                        WHERE centre_id = %s AND wing = %s AND floor = %s AND spot_number = %s""",
+                        (centre_id, wing, floor, spot_number),)
         conn.commit()
 
 

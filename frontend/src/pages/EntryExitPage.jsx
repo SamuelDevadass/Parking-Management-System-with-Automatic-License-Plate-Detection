@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Api } from "../api/client.js";
 import PlateChip from "../components/PlateChip.jsx";
 
-export default function EntryExitPage({ data, updateData, goTo }) {
+export default function EntryExitPage({ data, updateData, goTo }) 
+{
   const [spots, setSpots] = useState([]);
   const [selectedKey, setSelectedKey] = useState("");
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
 
-  function loadSpots() {
+  function loadSpots() 
+  {
     if (!data.size) return;
     Api.getAvailableSpots(data.wing, data.centre_id, data.size)
       .then(setSpots)
@@ -16,44 +18,47 @@ export default function EntryExitPage({ data, updateData, goTo }) {
   }
 
   // on_show() equivalent: reset the selected spot and reload the list.
-  useEffect(() => {
-    setSelectedKey("");
-    updateData({ floor: null, spotNumber: null });
-    loadSpots();
+  useEffect(() => { setSelectedKey("");
+                    updateData({ floor: null, spotNumber: null });
+                    loadSpots();
   }, [data.size]);
 
-  function handleSelect(e) {
+  function handleSelect(e) 
+  {
     const key = e.target.value;
     setSelectedKey(key);
     const spot = spots.find((s) => `${s.floor}-${s.spot_number}` === key);
     if (spot) updateData({ floor: spot.floor, spotNumber: spot.spot_number });
   }
 
-  async function markEntry() {
+  async function markEntry() 
+  {
     setError(null);
-    try {
-      await Api.markEntry({
-        license_plate: data.licensePlate,
-        centre_id: data.centre_id,
-        wing: data.wing,
-        floor: data.floor,
-        spot_number: data.spotNumber,
-        folder_path: data.folderPath,
-      });
+    try 
+    {
+      await Api.markEntry({ license_plate: data.licensePlate, centre_id: data.centre_id,
+                            wing: data.wing, floor: data.floor,
+                            spot_number: data.spotNumber, folder_path: data.folderPath,});
       setMessage("Entry recorded.");
       loadSpots();
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       setError(err.message);
     }
   }
 
-  async function markExit() {
+  async function markExit() 
+  {
     setError(null);
-    try {
+    try 
+    {
       await Api.markExit(data.licensePlate);
       setMessage("Exit recorded — bill is ready.");
       loadSpots();
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       setError(err.message);
     }
   }
@@ -94,7 +99,11 @@ export default function EntryExitPage({ data, updateData, goTo }) {
           Generate Bill
         </button>
         <button className="btn btn--ghost" onClick={() => goTo("spots")}>
-          Return
+          Next Car
+        </button>
+        <button className="btn" disabled={!data.licensePlate} 
+          onClick={() => goTo("owner")}
+        > Edit Owner Details
         </button>
       </div>
     </div>
