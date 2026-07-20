@@ -19,12 +19,10 @@ def get_connection():
 # ---------------------------------------------------------------------------
 # Wings
 # ---------------------------------------------------------------------------
-
 def list_wings() -> list[str]:
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("SELECT DISTINCT wing FROM has_wing_floor")
         return [row[0] for row in cur.fetchall()]
-
 
 def get_centre_for_wing(wing: str) -> Optional[int]:
     with get_connection() as conn, conn.cursor() as cur:
@@ -36,7 +34,6 @@ def get_centre_for_wing(wing: str) -> Optional[int]:
 # ---------------------------------------------------------------------------
 # Spots
 # ---------------------------------------------------------------------------
-
 def get_spot_availability(wing: str) -> dict:
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("""SELECT COUNT(*) FROM has_parking_spot
@@ -51,11 +48,24 @@ def get_spot_availability(wing: str) -> dict:
 
     return {"two_wheeler": two_wheeler, "four_wheeler": four_wheeler}
 
+# ---------------------------------------------------------------------------
+# Spots for entry 
+# ---------------------------------------------------------------------------
+def get_available_spots(wing: str, centre_id: int, size: str) -> list[dict]:
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """SELECT floor, spot_number, size
+               FROM has_parking_spot
+               WHERE centre_id = %s AND wing = %s AND size = %s AND availability = True
+               ORDER BY floor, spot_number""",
+            (centre_id, wing, size),
+        )
+        rows = cur.fetchall()
+    return [{"floor": r[0], "spot_number": r[1], "size": r[2]} for r in rows]
 
 # ---------------------------------------------------------------------------
-# Vehicle / owner details  (was Page1.fetch_details / update_vehicle_details)
+# Vehicle / owner details  
 # ---------------------------------------------------------------------------
-
 def get_vehicle(license_plate: str) -> Optional[dict]:
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("""SELECT owner_id, model, colour, type
@@ -83,8 +93,7 @@ def get_vehicle(license_plate: str) -> Optional[dict]:
 
 
 def save_vehicle( owner_id: str,license_plate: str,model: str,colour: str, 
-                  vehicle_type: str, phone: str,name: str,) -> None:
-    
+                  vehicle_type: str, phone: str,name: str,) -> None:   
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("""INSERT INTO owner (owner_id, name) VALUES (%s, %s)
                         ON CONFLICT (owner_id) DO NOTHING""",
@@ -102,26 +111,8 @@ def save_vehicle( owner_id: str,license_plate: str,model: str,colour: str,
 
 
 # ---------------------------------------------------------------------------
-# Spots for entry 
-# ---------------------------------------------------------------------------
-
-def get_available_spots(wing: str, centre_id: int, size: str) -> list[dict]:
-    with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(
-            """SELECT floor, spot_number, size
-               FROM has_parking_spot
-               WHERE centre_id = %s AND wing = %s AND size = %s AND availability = True
-               ORDER BY floor, spot_number""",
-            (centre_id, wing, size),
-        )
-        rows = cur.fetchall()
-    return [{"floor": r[0], "spot_number": r[1], "size": r[2]} for r in rows]
-
-
-# ---------------------------------------------------------------------------
 # Entry  
 # ---------------------------------------------------------------------------
-
 def mark_entry(entry_time,
                 license_plate: str, centre_id: int,
                 wing: str, floor: int,
@@ -142,7 +133,6 @@ def mark_entry(entry_time,
 # ---------------------------------------------------------------------------
 # Exit 
 # ---------------------------------------------------------------------------
-
 def get_active_session(license_plate: str) -> Optional[dict]:
     """The most recent parking_log row for this plate with no exit_time yet."""
     with get_connection() as conn, conn.cursor() as cur:
@@ -189,7 +179,6 @@ def record_exit(entry_time, exit_time,
 # ---------------------------------------------------------------------------
 # Billing 
 # ---------------------------------------------------------------------------
-
 def get_latest_bill(license_plate: str) -> Optional[dict]:
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute("""SELECT entry_time, exit_time, duration, amount
