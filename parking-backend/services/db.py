@@ -2,8 +2,7 @@ import os
 from typing import Optional
 import psycopg
 from dotenv import load_dotenv
-
-load_dotenv("./.env")
+load_dotenv(".//.env")
 
 CONNECTION_STRING = (
     f"dbname={os.getenv('DB_NAME')} "
@@ -108,7 +107,6 @@ def save_vehicle( owner_id: str,license_plate: str,model: str,colour: str,
                         ON CONFLICT (license_number) DO NOTHING""",
                         (owner_id, license_plate, model, colour, vehicle_type),)
         conn.commit()
-
 
 # ---------------------------------------------------------------------------
 # Entry  
