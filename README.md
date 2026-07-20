@@ -1,6 +1,30 @@
-# FullStack Web Application
+# Smart Parking Management System with License Plate Detection
 
-## Smart Parking Management System with License Plate Detection
+## Project Evolution Roadmap
+
+| Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 | Phase 6 | Phase 7 |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| ✓ <br> **Raspberry PI <br> version** | ✓ <br> **Local <br> Monolith** | ✓ <br> **Modular Local <br> Monolith** | ☑️ <br> **Application <br><br>** | ✅ <br> `Fullstack Web <br> Application` | ⬜ <br> Fullstack Web <br> with Go | ⬜ <br> Dockerized Web <br> Application |
+
+
+## Project Evolution Roadmap
+
+[![Completed](https://img.shields.io/badge/1._Raspberry_PI_Version-Completed-a5d6a7?style=for-the-badge&logoColor=white)](#) [![Completed](https://img.shields.io/badge/2._Local_Monolith-Completed-a5d6a7?style=for-the-badge&logoColor=white)](#) [![Completed](https://img.shields.io/badge/3._Modular_Local_Monolith-Completed-a5d6a7?style=for-the-badge&logoColor=white)](#)
+[![Current](https://img.shields.io/badge/4._Application-CURRENT_VERSION-2e7d32?style=for-the-badge&logoColor=white)](#)
+[![Upcoming](https://img.shields.io/badge/5._Fullstack_Web_Application-Upcoming-757575?style=for-the-badge&logoColor=white)](#) [![Upcoming](https://img.shields.io/badge/6._Fullstack_Web_with_Go-Upcoming-757575?style=for-the-badge&logoColor=white)](#) [![Upcoming](https://img.shields.io/badge/7._Dockerized_Web_Application-Upcoming-757575?style=for-the-badge&logoColor=white)](#)
+
+
+
+
+# 🗺️ Project Evolution Roadmap
+
+| Raspberry PI Version | Local Monolith | Modular Local Monolith | Application | Fullstack Web App | Fullstack Web App with Go | Dockerized Web App | 
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| [![Completed](https://img.shields.io/badge/Completed-a5d6a7?style=for-the-badge)](#) | [![Completed](https://img.shields.io/badge/Completed-a5d6a7?style=for-the-badge)](#) | [![Completed](https://img.shields.io/badge/Completed-a5d6a7?style=for-the-badge)](#) | [![Completed](https://img.shields.io/badge/Completed-a5d6a7?style=for-the-badge)](#) | [![Current](https://img.shields.io/badge/Current-2e7d32?style=for-the-badge)](#) | [![Upcoming](https://img.shields.io/badge/Upcoming-757575?style=for-the-badge)](#) | [![Upcoming](https://img.shields.io/badge/Upcoming-757575?style=for-the-badge)](#) |
+
+
+
+# FullStack Web Application
 
 STAND ALONE PROTOTYPE APPLICATION WITH FULLY FUNCTIONAL DATABASE AND AUTOMATIC PLATE DETECTION
 
