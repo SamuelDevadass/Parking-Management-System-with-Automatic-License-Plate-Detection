@@ -16,10 +16,22 @@ export default function EmptySpotsPage({ data, goTo })
       .finally(() => setLoading(false));
   }
 
+  function SpotGrid({ total, free }) 
+  {
+  return (
+    <div className="spot-grid">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i} className={`spot-square ${i < free ? "spot-square--free":"spot-square--occupied"}`}
+        />))}
+    </div>);
+  }
+
   // The "on_show" equivalent — re-fetch every time this page becomes active.
   useEffect(refresh, [data.wing]);
 
-  const noneFree = counts && counts.two_wheeler === 0 && counts.four_wheeler === 0;
+  const noneFree = counts && counts.total_spots_two_wheeler === 0 && counts.free_spots_two_wheeler === 0  
+                    && counts.total_spots_four_wheeler === 0 && counts.free_spots_four_wheeler === 0;
 
   return (
     <div className="panel">
@@ -37,27 +49,15 @@ export default function EmptySpotsPage({ data, goTo })
       (
         <div className="availability-grid">
           <div className="availability-card">
-            <div
-              className=
-              {`availability-card__count ${
-                counts.two_wheeler === 0 ? "availability-card__count--zero" : ""
-              }`}
-            >
-              {counts.two_wheeler}
-            </div>
-            <div className="availability-card__label">Two-Wheeler Spots Free</div>
+            <div className="availability-card__label">Two-Wheeler</div>
+              <SpotGrid total={counts.total_spots_two_wheeler} free={counts.free_spots_two_wheeler}/>
+              <div> {counts.free_spots_two_wheeler}/{counts.total_spots_two_wheeler} Available </div>
           </div>
           <div className="availability-card">
-            <div
-              className=
-              {`availability-card__count ${
-                counts.four_wheeler === 0 ? "availability-card__count--zero" : ""
-              }`}
-            >
-              {counts.four_wheeler}
+            <div className="availability-card__label">Four-Wheeler</div>
+                <SpotGrid total={counts.total_spots_four_wheeler} free={counts.free_spots_four_wheeler}/>
+                <div> {counts.free_spots_four_wheeler}/{counts.total_spots_four_wheeler} Available </div>
             </div>
-            <div className="availability-card__label">Four-Wheeler Spots Free</div>
-          </div>
         </div>
       )}
 

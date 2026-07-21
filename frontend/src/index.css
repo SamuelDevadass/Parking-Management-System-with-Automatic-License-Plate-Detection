@@ -319,6 +319,28 @@ button {
   flex-wrap: wrap;
 }
 
+/*Styling for Available and Occupied Spots*/
+.spot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 22px);
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.spot-square {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.spot-square--free {
+  background: #22c55e;
+}
+
+.spot-square--occupied {
+  background: #ef4444;
+}
+
 /* =========================================================================
    SIGNATURE ELEMENT: PLATE CHIP
    Any license plate in the UI renders as an actual stenciled plate —

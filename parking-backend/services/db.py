@@ -35,17 +35,22 @@ def get_centre_for_wing(wing: str) -> Optional[int]:
 # ---------------------------------------------------------------------------
 def get_spot_availability(wing: str) -> dict:
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute("""SELECT COUNT(*) FROM has_parking_spot
-                        WHERE wing = %s AND size = 'Two Wheeler' AND availability = True""",
+        cur.execute("""SELECT COUNT(*) AS total_spots_two_wheeler,
+                        COUNT(*) FILTER (WHERE availability = TRUE) AS free_spots_two_wheeler
+                        FROM has_parking_spot WHERE wing = %s AND size = 'Two Wheeler'""",
                         (wing,),)
-        two_wheeler = cur.fetchone()[0]
+        total_spots_two_wheeler, free_spots_two_wheeler = cur.fetchone()
 
-        cur.execute("""SELECT COUNT(*) FROM has_parking_spot
-                        WHERE wing = %s AND size = 'Four Wheeler' AND availability = True""",
+        cur.execute("""SELECT COUNT(*) AS total_spots_four_wheeler,
+                    COUNT(*) FILTER (WHERE availability = True) AS free_spots_four_wheeler
+                    FROM has_parking_spot WHERE wing = %s AND size = 'Four Wheeler'""",
                         (wing,),)
-        four_wheeler = cur.fetchone()[0]
+        total_spots_four_wheeler, free_spots_four_wheeler = cur.fetchone()
 
-    return {"two_wheeler": two_wheeler, "four_wheeler": four_wheeler}
+    return {"total_spots_two_wheeler": total_spots_two_wheeler, 
+            "free_spots_two_wheeler": free_spots_two_wheeler,  
+            "total_spots_four_wheeler": total_spots_four_wheeler, 
+            "free_spots_four_wheeler": free_spots_four_wheeler,}
 
 # ---------------------------------------------------------------------------
 # Spots for entry 
