@@ -322,9 +322,10 @@ button {
 /*Styling for Available and Occupied Spots*/
 .spot-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 22px);
+  grid-template-columns: repeat(auto-fit, 22px);/* changed from autofill to autofit for aligning*/
   gap: 6px;
   margin: 12px 0;
+  justify-content: center;
 }
 
 .spot-square {
