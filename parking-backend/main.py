@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv("./.env")
 
-app = FastAPI(title="Gatehouse Parking API")
+app = FastAPI(title="Smart Parking Management System API")
 
 # The Vite dev server runs on :5173 and is a different origin from :8000,
 # so the browser blocks the frontend's fetch() calls unless we explicitly
