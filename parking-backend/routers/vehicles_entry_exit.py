@@ -34,7 +34,7 @@ def mark_entry(payload: EntryPayload):
                     spot_number=payload.spot_number, folder_path=payload.folder_path or "",)
     return {"ok": True}
 
-@router.post("/api/vehicles/spot/{license_plate}")
+@router.get("/api/vehicles/spot/{license_plate}")
 def get_spot_details(license_plate: str):
     session = db.get_active_session(license_plate)
     if session:

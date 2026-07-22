@@ -8,6 +8,7 @@ export default function EntryExitPage({ data, updateData, goTo })
   const [selectedKey, setSelectedKey] = useState("");
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [occupiedSpot, setOccupiedSpot] = useState(null);
 
   function loadSpots() 
   {
@@ -21,7 +22,11 @@ export default function EntryExitPage({ data, updateData, goTo })
   useEffect(() => { setSelectedKey("");
                     updateData({ floor: null, spotNumber: null });
                     loadSpots();
-  }, [data.size]);
+                    if (data.licensePlate)
+                    {
+                      getSpot();
+                    }
+  }, [data.size, data.licensePlate],);
 
   function handleSelect(e) 
   {
@@ -48,6 +53,28 @@ export default function EntryExitPage({ data, updateData, goTo })
     }
   }
 
+  async function getSpot() 
+  {
+  try 
+  {
+    const result = await Api.getSpot(data.licensePlate);
+
+    if (result.status) 
+    {
+      setOccupiedSpot(result.spot_number);
+      setSelectedKey(`occupied-${result.spot_number}`);
+    } 
+    else 
+    {
+      setOccupiedSpot(null);
+    }
+  } 
+  catch (err) 
+  {
+    setError(err.message);
+  }
+}
+
   async function markExit() 
   {
     setError(null);
@@ -73,18 +100,19 @@ export default function EntryExitPage({ data, updateData, goTo })
 
       <div className="field">
         <label htmlFor="spot-select">Available Spots</label>
-        <select id="spot-select" value={selectedKey} onChange={handleSelect}>
+        <select id="spot-select" value={occupiedSpot ? `occupied-${occupiedSpot}` : selectedKey}
+          onChange={handleSelect} disabled={!!occupiedSpot} >
+          {occupiedSpot && (<option value={`occupied-${occupiedSpot}`}>
+            </option>)}
           <option value="" disabled>
             {spots.length ? "Choose a spot…" : "No spots loaded — pick a vehicle type first"}
           </option>
           {spots.map((s) => (
             <option key={`${s.floor}-${s.spot_number}`} value={`${s.floor}-${s.spot_number}`}>
               Floor {s.floor} · Spot {s.spot_number} ({s.size})
-            </option>
-          ))}
+            </option>))}
         </select>
       </div>
-
       <div className="btn-row">
         <button className="btn btn--primary" onClick={markEntry} disabled={!selectedKey}>
           Mark Entry
@@ -93,7 +121,6 @@ export default function EntryExitPage({ data, updateData, goTo })
           Mark Exit
         </button>
       </div>
-
       <div className="btn-row">
         <button className="btn btn--ghost" onClick={() => goTo("billing")}>
           Generate Bill
