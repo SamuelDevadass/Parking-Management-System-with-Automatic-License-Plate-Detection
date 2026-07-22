@@ -70,6 +70,8 @@ export const Api =
 
   markEntry: (payload) => request("/entries", { method: "POST", body: JSON.stringify(payload) }),
 
+  getSpot: (licensePlate) => request(`/vehicles/spot/${encodeURIComponent(licensePlate)}`),
+
   markExit: (licensePlate) =>
     request("/exits", { method: "POST", body: JSON.stringify({ license_plate: licensePlate }) }),
 
