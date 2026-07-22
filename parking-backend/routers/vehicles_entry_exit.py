@@ -34,6 +34,15 @@ def mark_entry(payload: EntryPayload):
                     spot_number=payload.spot_number, folder_path=payload.folder_path or "",)
     return {"ok": True}
 
+@router.post("/api/vehicles/spot/{license_plate}")
+def get_spot_details(license_plate: str):
+    session = db.get_active_session(license_plate)
+    if session:
+        return { "spot_number" : session["spot_number"], "status" : True }
+    else:
+        return { "spot_number" : "", "status" : False }
+
+
 
 @router.post("/api/exits")
 def mark_exit(payload: ExitPayload):
